@@ -4,6 +4,18 @@
 
 Production-ready Mask R-CNN implementation in JAX/Flax using Google Scenic's training infrastructure.
 
+## Autonomous Implementation Mode
+
+**CRITICAL: Claude Code operates in autonomous completion mode for this project.**
+
+- **Continue until exhaustion**: Keep implementing architecture tasks from ARCHITECTURE_TASKS.md until ALL possible components are complete
+- **Do NOT stop to ask for next steps**: Autonomously proceed through all sprints (1-7) without user prompts
+- **Verification gate**: Only stop work after consulting Gemini 2.5 Pro via clink: "Have I implemented absolutely every part of the Mask R-CNN JAX model that I possibly could?"
+- **If answer is NO**: Continue implementing remaining components
+- **If answer is YES**: Only then report completion to user
+- **Maximum parallelism**: Launch as many independent Codex tasks as possible simultaneously
+- **Continuous monitoring**: Review implementations as they complete, fix issues, validate tests, commit progress
+
 ## Technology Stack
 
 - **Language**: Python 3.12
