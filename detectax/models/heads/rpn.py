@@ -4,10 +4,7 @@ Reference: Faster R-CNN: Towards Real-Time Object Detection with Region Proposal
 https://arxiv.org/abs/1506.01497
 """
 
-from typing import List, Tuple
-
 import flax.linen as nn
-import jax
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
@@ -48,7 +45,7 @@ class RPNHead(nn.Module):
         self,
         x: Float[Array, "batch height width channels"],
         train: bool = False,
-    ) -> Tuple[
+    ) -> tuple[
         Float[Array, "batch height width num_anchors"],  # objectness scores
         Float[Array, "batch height width num_anchors*4"],  # bbox deltas
     ]:
@@ -67,9 +64,9 @@ class RPNHead(nn.Module):
         feat = nn.Conv(
             features=self.feat_channels,
             kernel_size=(3, 3),
-            padding='SAME',
+            padding="SAME",
             dtype=self.dtype,
-            name='rpn_conv',
+            name="rpn_conv",
         )(x)
         feat = nn.relu(feat)
 
@@ -78,7 +75,7 @@ class RPNHead(nn.Module):
             features=self.num_anchors,
             kernel_size=(1, 1),
             dtype=self.dtype,
-            name='rpn_cls',
+            name="rpn_cls",
         )(feat)
 
         # Bounding box regression (4 values per anchor: dx, dy, dw, dh)
@@ -86,7 +83,7 @@ class RPNHead(nn.Module):
             features=self.num_anchors * 4,
             kernel_size=(1, 1),
             dtype=self.dtype,
-            name='rpn_reg',
+            name="rpn_reg",
         )(feat)
 
         return cls_score, bbox_pred
@@ -112,11 +109,11 @@ class RPN(nn.Module):
     @nn.compact
     def __call__(
         self,
-        fpn_features: List[Float[Array, "batch height width channels"]],
+        fpn_features: list[Float[Array, "batch height width channels"]],
         train: bool = False,
-    ) -> Tuple[
-        List[Float[Array, "batch height width num_anchors"]],
-        List[Float[Array, "batch height width num_anchors*4"]],
+    ) -> tuple[
+        list[Float[Array, "batch height width num_anchors"]],
+        list[Float[Array, "batch height width num_anchors*4"]],
     ]:
         """Apply RPN to all FPN levels.
 
@@ -135,7 +132,7 @@ class RPN(nn.Module):
             feat_channels=self.feat_channels,
             num_anchors=self.num_anchors,
             dtype=self.dtype,
-            name='rpn_head',
+            name="rpn_head",
         )
 
         cls_scores = []

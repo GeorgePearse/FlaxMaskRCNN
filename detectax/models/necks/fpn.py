@@ -7,7 +7,7 @@ This implementation follows Scenic patterns for JAX/Flax while maintaining
 architectural fidelity to the PyTorch visdet reference.
 """
 
-from typing import Optional, Sequence, Tuple
+from collections.abc import Sequence
 
 import flax.linen as nn
 import jax
@@ -90,19 +90,19 @@ class FPN(nn.Module):
         # Validate add_extra_convs
         assert isinstance(self.add_extra_convs, (str, bool))
         if isinstance(self.add_extra_convs, str):
-            assert self.add_extra_convs in ('on_input', 'on_lateral', 'on_output')
+            assert self.add_extra_convs in ("on_input", "on_lateral", "on_output")
 
         # Store extra convs mode
         self.extra_convs_mode = self.add_extra_convs
         if self.add_extra_convs is True:
-            self.extra_convs_mode = 'on_input'
+            self.extra_convs_mode = "on_input"
 
     @nn.compact
     def __call__(
         self,
         inputs: Sequence[Float[Array, "batch height width channels"]],
         train: bool = False,
-    ) -> Tuple[Float[Array, "batch height width out_channels"], ...]:
+    ) -> tuple[Float[Array, "batch height width out_channels"], ...]:
         """Forward pass of FPN.
 
         Args:
@@ -114,9 +114,7 @@ class FPN(nn.Module):
             Tuple of FPN feature maps (P2, P3, P4, P5, P6, ...).
             Each is [B, H, W, out_channels].
         """
-        assert len(inputs) == len(self.in_channels), (
-            f"Expected {len(self.in_channels)} inputs, got {len(inputs)}"
-        )
+        assert len(inputs) == len(self.in_channels), f"Expected {len(self.in_channels)} inputs, got {len(inputs)}"
 
         # Build lateral connections (1x1 convs to unify channels)
         laterals = []
@@ -127,7 +125,7 @@ class FPN(nn.Module):
                 kernel_size=(1, 1),
                 use_bias=self.use_bias,
                 dtype=self.dtype,
-                name=f'lateral_conv_{idx}',
+                name=f"lateral_conv_{idx}",
             )(inputs[i])
             laterals.append(lateral)
 
@@ -139,7 +137,7 @@ class FPN(nn.Module):
             upsampled = jax.image.resize(
                 laterals[i],
                 shape=(laterals[i].shape[0], *prev_shape, laterals[i].shape[3]),
-                method='nearest',
+                method="nearest",
             )
             # Add to lateral connection
             laterals[i - 1] = laterals[i - 1] + upsampled
@@ -150,10 +148,10 @@ class FPN(nn.Module):
             fpn_out = nn.Conv(
                 features=self.out_channels,
                 kernel_size=(3, 3),
-                padding='SAME',
+                padding="SAME",
                 use_bias=self.use_bias,
                 dtype=self.dtype,
-                name=f'fpn_conv_{i}',
+                name=f"fpn_conv_{i}",
             )(lateral)
             outs.append(fpn_out)
 
@@ -161,22 +159,22 @@ class FPN(nn.Module):
         extra_levels = self.num_outs - self.backbone_end_level + self.start_level
         if self.extra_convs_mode and extra_levels >= 1:
             # Determine source for extra levels
-            if self.extra_convs_mode == 'on_input':
+            if self.extra_convs_mode == "on_input":
                 source = inputs[self.backbone_end_level - 1]
-            elif self.extra_convs_mode == 'on_lateral':
+            elif self.extra_convs_mode == "on_lateral":
                 source = laterals[-1]
             else:  # 'on_output'
                 source = outs[-1]
 
             # Add extra conv layers with stride 2
             for i in range(extra_levels):
-                if i == 0 and self.extra_convs_mode == 'on_input':
+                if i == 0 and self.extra_convs_mode == "on_input":
                     # First extra level from backbone feature
-                    in_channels = self.in_channels[self.backbone_end_level - 1]
+                    _in_channels = self.in_channels[self.backbone_end_level - 1]
                     extra_in = source
                 else:
                     # Subsequent extra levels from previous output
-                    in_channels = self.out_channels
+                    _in_channels = self.out_channels
                     extra_in = outs[-1]
 
                 # Apply ReLU if requested
@@ -188,10 +186,10 @@ class FPN(nn.Module):
                     features=self.out_channels,
                     kernel_size=(3, 3),
                     strides=(2, 2),
-                    padding='SAME',
+                    padding="SAME",
                     use_bias=self.use_bias,
                     dtype=self.dtype,
-                    name=f'extra_conv_{i}',
+                    name=f"extra_conv_{i}",
                 )(extra_in)
                 outs.append(extra_out)
 

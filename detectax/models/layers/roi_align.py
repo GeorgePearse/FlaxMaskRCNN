@@ -4,8 +4,6 @@ Reference: Mask R-CNN
 https://arxiv.org/abs/1703.06870
 """
 
-from typing import Tuple
-
 import jax
 import jax.numpy as jnp
 from jaxtyping import Array, Float
@@ -14,7 +12,7 @@ from jaxtyping import Array, Float
 def roi_align(
     features: Float[Array, "batch height width channels"],
     boxes: Float[Array, "num_boxes 4"],
-    output_size: Tuple[int, int] = (7, 7),
+    output_size: tuple[int, int] = (7, 7),
     spatial_scale: float = 1.0,
     sampling_ratio: int = 2,
 ) -> Float[Array, "num_boxes out_h out_w channels"]:
@@ -43,8 +41,8 @@ def roi_align(
         >>> aligned.shape
         (1, 7, 7, 256)
     """
-    batch_size, feat_h, feat_w, channels = features.shape
-    num_boxes = boxes.shape[0]
+    _batch_size, feat_h, feat_w, channels = features.shape
+    _num_boxes = boxes.shape[0]
     out_h, out_w = output_size
 
     # Scale boxes to feature map coordinates
@@ -110,12 +108,7 @@ def roi_align(
                     v11 = feat_single[y1_pt, x1_pt, :]
 
                     # Bilinear interpolation
-                    val = (
-                        wy0 * wx0 * v00
-                        + wy0 * wx1 * v01
-                        + wy1 * wx0 * v10
-                        + wy1 * wx1 * v11
-                    )
+                    val = wy0 * wx0 * v00 + wy0 * wx1 * v01 + wy1 * wx0 * v10 + wy1 * wx1 * v11
                     samples.append(val)
 
             # Average all samples in the bin
@@ -138,7 +131,7 @@ def roi_align(
 def roi_pool(
     features: Float[Array, "batch height width channels"],
     boxes: Float[Array, "num_boxes 4"],
-    output_size: Tuple[int, int] = (7, 7),
+    output_size: tuple[int, int] = (7, 7),
     spatial_scale: float = 1.0,
 ) -> Float[Array, "num_boxes out_h out_w channels"]:
     """RoI Pooling operation (simpler alternative to RoI Align).
@@ -154,8 +147,8 @@ def roi_pool(
     Returns:
         Pooled features [N, out_h, out_w, C].
     """
-    batch_size, feat_h, feat_w, channels = features.shape
-    num_boxes = boxes.shape[0]
+    _batch_size, feat_h, feat_w, channels = features.shape
+    _num_boxes = boxes.shape[0]
     out_h, out_w = output_size
 
     # Scale boxes
@@ -198,11 +191,7 @@ def roi_pool(
                 bin_h = end_y - start_y
                 bin_w = end_x - start_x
                 if bin_h > 0 and bin_w > 0:
-                    bin_feat = jax.lax.dynamic_slice(
-                        feat_single,
-                        (start_y, start_x, 0),
-                        (bin_h, bin_w, channels)
-                    )
+                    bin_feat = jax.lax.dynamic_slice(feat_single, (start_y, start_x, 0), (bin_h, bin_w, channels))
                     pooled = jnp.max(bin_feat, axis=(0, 1))
                 else:
                     pooled = jnp.zeros(channels)

@@ -1,0 +1,43 @@
+fail_fast: false
+
+# Exclude reference directory (PyTorch code for reference only)
+exclude: '^reference/'
+
+repos:
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+        args: ["--maxkb=3000"]
+      - id: requirements-txt-fixer
+      - id: check-merge-conflict
+
+  # JSON validation (allows comments in JSON)
+  - repo: https://gitlab.com/bmares/check-json5
+    rev: v1.0.0
+    hooks:
+      - id: check-json5
+
+  # Python hooks - Ruff (linter and formatter)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.13.2
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: [--fix, --config=pyproject.toml]
+      # Run the formatter
+      - id: ruff-format
+        args: [--config=pyproject.toml]
+
+  # Strip output from Jupyter notebooks
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.1
+    hooks:
+      - id: nbstripout
+
+  # Note: Pyright is not included in pre-commit due to incompatibility with jaxtyping
+  # Run manually with: uv run pyright
+  # Or use mypy instead: uv run mypy detectax

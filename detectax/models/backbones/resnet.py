@@ -3,8 +3,6 @@
 Wraps Scenic's ResNet to extract multi-scale features for FPN.
 """
 
-from typing import Dict, Tuple
-
 import flax.linen as nn
 import jax.numpy as jnp
 from jaxtyping import Array, Float
@@ -45,7 +43,7 @@ class ResNetBackbone(nn.Module):
         self,
         x: Float[Array, "batch height width 3"],
         train: bool = False,
-    ) -> Dict[str, Float[Array, "batch h w channels"]]:
+    ) -> dict[str, Float[Array, "batch h w channels"]]:
         """Extract multi-scale features from input images.
 
         Args:
@@ -61,24 +59,22 @@ class ResNetBackbone(nn.Module):
         """
         # TODO: Import and use Scenic's ResNet when available
         # For now, return placeholder features for testing
-        batch_size = x.shape[0]
-        h, w = x.shape[1], x.shape[2]
 
         # Simulate ResNet feature extraction
         # C2: stride 4, 256 channels
-        c2 = nn.Conv(256, (1, 1), name='c2_placeholder')(x[:, ::4, ::4, :])
+        c2 = nn.Conv(256, (1, 1), name="c2_placeholder")(x[:, ::4, ::4, :])
         # C3: stride 8, 512 channels
-        c3 = nn.Conv(512, (1, 1), name='c3_placeholder')(x[:, ::8, ::8, :])
+        c3 = nn.Conv(512, (1, 1), name="c3_placeholder")(x[:, ::8, ::8, :])
         # C4: stride 16, 1024 channels
-        c4 = nn.Conv(1024, (1, 1), name='c4_placeholder')(x[:, ::16, ::16, :])
+        c4 = nn.Conv(1024, (1, 1), name="c4_placeholder")(x[:, ::16, ::16, :])
         # C5: stride 32, 2048 channels
-        c5 = nn.Conv(2048, (1, 1), name='c5_placeholder')(x[:, ::32, ::32, :])
+        c5 = nn.Conv(2048, (1, 1), name="c5_placeholder")(x[:, ::32, ::32, :])
 
         return {
-            'stage_1': c2,  # C2
-            'stage_2': c3,  # C3
-            'stage_3': c4,  # C4
-            'stage_4': c5,  # C5
+            "stage_1": c2,  # C2
+            "stage_2": c3,  # C3
+            "stage_3": c4,  # C4
+            "stage_4": c5,  # C5
         }
 
 
