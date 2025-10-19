@@ -4,7 +4,7 @@
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![JAX](https://img.shields.io/badge/JAX-0.4.35-orange.svg)](https://github.com/google/jax)
 
-Production-ready Mask R-CNN implementation in JAX/Flax with Google Scenic infrastructure.
+⚠️ **Experimental hobby project** - This is very much a work-in-progress mess-around repo, largely AI-generated code. Not production-ready by any means!
 
 ```python
 import detectax as dax
@@ -16,13 +16,13 @@ predictions = model(images)
 
 ## Overview
 
-Detectax implements Mask R-CNN for object detection and instance segmentation using JAX/Flax, building on Google Scenic's training infrastructure. It provides:
+Detectax is an attempt to implement Mask R-CNN for object detection and instance segmentation using JAX/Flax. It's a learning/exploration project that aims to:
 
-- **Complete Mask R-CNN**: Backbone, FPN, RPN, detection & mask heads
-- **Production-ready**: Distributed training, checkpointing, COCO evaluation
-- **Type-safe**: Full type annotations with jaxtyping
-- **Tested**: Comprehensive unit and integration tests
-- **Documented**: Detailed architecture and API documentation
+- **Build Mask R-CNN components**: Backbone, FPN, RPN, detection & mask heads
+- **Learn JAX patterns**: Functional programming, jit compilation, pmap/pjit
+- **Type-safe code**: Full type annotations with jaxtyping
+- **Test as we go**: Unit tests for components we build
+- **Document the journey**: Notes on architecture and implementation decisions
 
 ## Quick Start
 
@@ -241,12 +241,12 @@ See [TODO.md](TODO.md) for detailed roadmap and task breakdown.
 
 Want to learn more about JAX? See [docs/why_jax.md](docs/why_jax.md).
 
-### Production Ready
-- Distributed training with JAX's pmap/pjit
-- Checkpoint saving with orbax-checkpoint
-- COCO evaluation metrics (AP, AP50, AP75, AR)
+### Development Goals
+- Distributed training with JAX's pmap/pjit (planned)
+- Checkpoint saving with orbax-checkpoint (planned)
+- COCO evaluation metrics (AP, AP50, AP75, AR) (planned)
 - Progress tracking with tqdm
-- Configuration management with ml_collections
+- Configuration management with ml_collections (planned)
 
 ## Documentation
 
@@ -286,9 +286,14 @@ The `reference/` directory contains PyTorch code from visdet for architecture re
 
 ## Resources
 
+### JAX Ecosystem
 - [JAX Documentation](https://jax.readthedocs.io/)
 - [Flax Documentation](https://flax.readthedocs.io/)
-- [Scenic Repository](https://github.com/google-research/scenic)
+- [Scenic Repository](https://github.com/google-research/scenic) - Training infrastructure
+- [Haliax](https://github.com/marin-community/haliax) - Named tensor library for JAX
+- [Mixed Precision for JAX](https://github.com/Data-Science-in-Mechanical-Engineering/mixed_precision_for_JAX) - Mixed precision training utilities
+
+### Papers
 - [Mask R-CNN Paper](https://arxiv.org/abs/1703.06870)
 - [Feature Pyramid Networks Paper](https://arxiv.org/abs/1612.03144)
 
@@ -302,14 +307,15 @@ If you use Detectax in your research, please cite:
 
 ```bibtex
 @software{detectax2025,
-  title={Detectax: Production-ready Mask R-CNN in JAX/Flax},
+  title={Detectax: Experimental Mask R-CNN in JAX/Flax},
   author={Your Name},
   year={2025},
-  url={https://github.com/yourusername/FlaxMaskRCNN}
+  url={https://github.com/yourusername/FlaxMaskRCNN},
+  note={Experimental hobby project - not production-ready}
 }
 ```
 
 ---
 
-**Status**: Alpha - API may change
+**Status**: Experimental - Very early stage, mostly AI-generated code, expect bugs and incomplete features
 **Python**: 3.12+ | **JAX**: 0.4.35+ | **License**: Apache 2.0
