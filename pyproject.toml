@@ -1,7 +1,7 @@
 [project]
-name = "flax-mask-rcnn"
+name = "detectax"
 version = "0.1.0"
-description = "Production-ready Mask R-CNN implementation in JAX/Flax with Scenic infrastructure"
+description = "Detectax (Dax): Production-ready Mask R-CNN implementation in JAX/Flax with Scenic infrastructure"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -42,7 +42,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["flax_mask_rcnn*"]
+include = ["detectax*"]
 
 [tool.ruff]
 line-length = 150

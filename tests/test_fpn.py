@@ -3,7 +3,7 @@
 import jax
 import jax.numpy as jnp
 import pytest
-from flax_mask_rcnn.models.necks.fpn import FPN
+from detectax.models.necks.fpn import FPN
 
 
 class TestFPN:
