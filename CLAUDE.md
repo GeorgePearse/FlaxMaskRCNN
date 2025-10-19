@@ -145,12 +145,123 @@ uv run python -m flax_mask_rcnn.training.train --config configs/mask_rcnn_r50_fp
 - **Distributed Training**: Use JAX's pmap/pjit for multi-GPU training
 - **No PyTorch**: This is a pure JAX/Flax implementation, PyTorch visdet code is reference only
 
+## Multi-Model Collaboration with Clink
+
+This project uses the zen-mcp-server's `clink` tool to enable collaboration between different AI CLI agents (Claude Code, Codex CLI, Gemini CLI). This allows you to leverage different models' strengths while maintaining context.
+
+### Why Use Clink with Codex?
+
+**Codex is optimized for code generation and implementation tasks.** When you need to:
+- Implement complex code structures
+- Port algorithms from reference implementations
+- Generate boilerplate with high precision
+- Handle intricate type systems
+
+**Use Codex via clink instead of doing it yourself.** This provides:
+- **Context Isolation**: Heavy implementation tasks run in fresh context, preserving your working context window
+- **Specialized Expertise**: Codex's code generation strengths for implementation-heavy work
+- **Seamless Handoff**: Full conversation context is preserved when delegating tasks
+
+### How to Use Clink
+
+**Basic Usage:**
+
+```python
+# Delegate code implementation to Codex
+mcp__zen__clink(
+    prompt="Implement the RoI Align layer in JAX/Flax with proper type annotations",
+    cli_name="codex",
+    files=["/home/georgepearse/FlaxMaskRCNN/detectax/models/layers/roi_align.py"]
+)
+```
+
+**With Roles:**
+
+```python
+# Use Codex for code review
+mcp__zen__clink(
+    prompt="Review this FPN implementation for correctness and JAX best practices",
+    cli_name="codex",
+    role="codereviewer",
+    files=["/home/georgepearse/FlaxMaskRCNN/detectax/models/necks/fpn.py"]
+)
+```
+
+**Available Roles:**
+- `default`: General purpose coding
+- `planner`: Architecture and design planning
+- `codereviewer`: Code review and quality checks
+
+### When to Use Clink
+
+**DO use clink for:**
+- ✅ Implementing complex algorithms from reference code
+- ✅ Generating large code structures (full modules, classes)
+- ✅ Porting PyTorch reference code to JAX/Flax
+- ✅ Code reviews of completed implementations
+- ✅ Deep debugging sessions that need fresh context
+
+**DON'T use clink for:**
+- ❌ Simple questions or clarifications (use chat tool instead)
+- ❌ Quick edits or small changes
+- ❌ Exploratory discussions (use consensus tool instead)
+- ❌ File searches or code navigation
+
+### Security Note
+
+Clink spawns autonomous CLI agents with relaxed permissions (`--dangerously-bypass-approvals-and-sandbox` for Codex). These agents can edit files and run commands. Only use clink when you want full autonomous implementation.
+
+### Typical Workflow
+
+1. **Plan with Claude Code** (you): Understand requirements, design architecture
+2. **Implement with Codex** (clink): Heavy lifting of code generation
+3. **Review with Claude Code** (you): Verify, test, iterate
+4. **Consensus for decisions** (zen consensus tool): Debate architectural choices with multiple models
+
+**Example:**
+
+```python
+# Step 1: You plan the approach
+"Let's port the RPN head from reference/visdet_models to JAX/Flax"
+
+# Step 2: Delegate implementation to Codex
+mcp__zen__clink(
+    prompt="""
+    Port the RPN head from reference/visdet_models/dense_heads/anchor_head.py
+    to detectax/models/heads/rpn_head.py using JAX/Flax patterns.
+
+    Requirements:
+    - Use Flax nn.Module
+    - Full type annotations with jaxtyping
+    - Follow existing FPN implementation patterns
+    - Include comprehensive docstrings
+    """,
+    cli_name="codex",
+    files=[
+        "reference/visdet_models/dense_heads/anchor_head.py",
+        "detectax/models/necks/fpn.py"  # for pattern reference
+    ]
+)
+
+# Step 3: Review the implementation
+"Let's review what Codex generated and run tests"
+```
+
+### Pro Tips
+
+- **Always provide file paths**: Codex performs better with concrete file references
+- **Be explicit about requirements**: Mention patterns to follow, style guidelines, type annotations
+- **Reference existing code**: Point to similar implementations as examples
+- **Use continuation_id**: Reuse continuation_id across clink calls to maintain context across multiple Codex sessions
+- **Prefer Codex for porting**: When porting from PyTorch reference, Codex excels at maintaining semantic equivalence
+
 ## Resources
 
 - JAX Documentation: https://jax.readthedocs.io/
 - Flax Documentation: https://flax.readthedocs.io/
 - Scenic Repository: https://github.com/google-research/scenic
 - visdet Reference: `/home/georgepearse/core/machine_learning/packages/visdet`
+- zen-mcp-server clink docs: https://github.com/BeehiveInnovations/zen-mcp-server/blob/main/docs/tools/clink.md
 
 ---
 

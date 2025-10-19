@@ -204,6 +204,49 @@ uv run pytest --cov=detectax --cov-report=html
 uv run pytest tests/test_fpn.py -v
 ```
 
+### Spec-Driven Development
+
+Detectax uses [GitHub Spec Kit](https://github.com/github/spec-kit) for spec-driven development with AI assistants. This enables a structured workflow:
+
+1. **Define**: Create specifications that focus on what the feature does (not how)
+2. **Plan**: Break down specs into implementation plans
+3. **Build**: Generate tasks and implement with AI assistance
+4. **Validate**: Ensure implementations match specifications
+
+**Available slash commands:**
+
+```bash
+/speckit.constitution   # Establish project principles
+/speckit.specify        # Create feature specification
+/speckit.plan          # Create implementation plan
+/speckit.tasks         # Generate actionable tasks
+/speckit.implement     # Execute implementation
+
+# Optional enhancement commands
+/speckit.clarify       # Ask structured questions to de-risk ambiguous areas
+/speckit.analyze       # Cross-artifact consistency & alignment report
+/speckit.checklist     # Generate quality checklists
+```
+
+**Example workflow:**
+
+```bash
+# Start with a natural language description
+/speckit.specify Add support for training on custom COCO-format datasets
+
+# Review and refine the generated specification
+# Then create an implementation plan
+/speckit.plan
+
+# Generate actionable tasks
+/speckit.tasks
+
+# Execute implementation
+/speckit.implement
+```
+
+All specifications and plans are stored in `.specify/` and tracked in git. The `.claude/` directory contains agent-specific configurations and is excluded from version control.
+
 ## Roadmap
 
 **Current Status**: Phase 2 - Core Model Implementation (40% complete)

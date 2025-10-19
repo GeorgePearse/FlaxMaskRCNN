@@ -64,3 +64,6 @@ htmlcov/
 .mypy_cache/
 .pyright/
 .ruff_cache/
+
+# Spec-kit
+.claude/  # May contain credentials, auth tokens, or private artifacts
