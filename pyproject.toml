@@ -1,0 +1,69 @@
+[project]
+name = "flax-mask-rcnn"
+version = "0.1.0"
+description = "Production-ready Mask R-CNN implementation in JAX/Flax with Scenic infrastructure"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "jax[cuda12]==0.4.35",
+    "flax==0.10.2",
+    "optax==0.2.4",
+    "numpy==2.0.2",
+    "scipy==1.14.1",
+    "pillow==11.0.0",
+    "matplotlib==3.9.2",
+    "tqdm==4.67.1",
+    "pyyaml==6.0.2",
+    "pycocotools==2.0.8",
+    "tensorflow==2.18.0",
+    "tensorflow-datasets==4.9.7",
+    "typing-extensions==4.12.2",
+    "jaxtyping==0.2.34",
+    "chex==0.1.87",
+    "orbax-checkpoint==0.8.0",
+    "clu==0.0.12",
+    "ml-collections==1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.4",
+    "pytest-cov==6.0.0",
+    "mypy==1.13.0",
+    "pyright==1.1.390",
+    "ruff==0.8.4",
+    "black==24.10.0",
+    "pre-commit==4.0.1",
+]
+
+[build-system]
+requires = ["setuptools>=75.6.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["flax_mask_rcnn*"]
+
+[tool.ruff]
+line-length = 150
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = ["E501"]
+
+[tool.black]
+line-length = 150
+target-version = ["py312"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
