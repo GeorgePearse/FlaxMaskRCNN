@@ -361,6 +361,72 @@ wheels = [
 ]
 
 [[package]]
+name = "detectax"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "chex" },
+    { name = "clu" },
+    { name = "flax" },
+    { name = "jax" },
+    { name = "jaxtyping" },
+    { name = "matplotlib" },
+    { name = "ml-collections" },
+    { name = "numpy" },
+    { name = "optax" },
+    { name = "orbax-checkpoint" },
+    { name = "pillow" },
+    { name = "pycocotools" },
+    { name = "pyyaml" },
+    { name = "scipy" },
+    { name = "tensorflow" },
+    { name = "tensorflow-datasets" },
+    { name = "tqdm" },
+    { name = "typing-extensions" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "black" },
+    { name = "mypy" },
+    { name = "pre-commit" },
+    { name = "pyright" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "black", marker = "extra == 'dev'", specifier = "==24.10.0" },
+    { name = "chex", specifier = "==0.1.87" },
+    { name = "clu", specifier = "==0.0.12" },
+    { name = "flax", specifier = "==0.10.2" },
+    { name = "jax", extras = ["cpu"], specifier = "==0.4.35" },
+    { name = "jaxtyping", specifier = "==0.2.34" },
+    { name = "matplotlib", specifier = "==3.9.2" },
+    { name = "ml-collections", specifier = "==1.0.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = "==1.13.0" },
+    { name = "numpy", specifier = "==2.0.2" },
+    { name = "optax", specifier = "==0.2.4" },
+    { name = "orbax-checkpoint", specifier = "==0.8.0" },
+    { name = "pillow", specifier = "==11.0.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = "==4.0.1" },
+    { name = "pycocotools", specifier = "==2.0.8" },
+    { name = "pyright", marker = "extra == 'dev'", specifier = "==1.1.390" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = "==8.3.4" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = "==6.0.0" },
+    { name = "pyyaml", specifier = "==6.0.2" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = "==0.8.4" },
+    { name = "scipy", specifier = "==1.14.1" },
+    { name = "tensorflow", specifier = "==2.18.0" },
+    { name = "tensorflow-datasets", specifier = "==4.9.7" },
+    { name = "tqdm", specifier = "==4.67.1" },
+    { name = "typing-extensions", specifier = "==4.12.2" },
+]
+provides-extras = ["dev"]
+
+[[package]]
 name = "distlib"
 version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -505,72 +571,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/ff/38/4a0203198ac945983
 wheels = [
     { url = "https://files.pythonhosted.org/packages/50/a2/daca2bc563e1fd53c33fbff1e33e84004639f7ad9e1a9a54370480a7780d/flax-0.10.2-py3-none-any.whl", hash = "sha256:5bc0954b98d1596e8984f8e1bb84105e6e1dd9eae311cee3a777d7a335470a76", size = 424180, upload-time = "2024-11-19T19:58:50.235Z" },
 ]
-
-[[package]]
-name = "flax-mask-rcnn"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "chex" },
-    { name = "clu" },
-    { name = "flax" },
-    { name = "jax" },
-    { name = "jaxtyping" },
-    { name = "matplotlib" },
-    { name = "ml-collections" },
-    { name = "numpy" },
-    { name = "optax" },
-    { name = "orbax-checkpoint" },
-    { name = "pillow" },
-    { name = "pycocotools" },
-    { name = "pyyaml" },
-    { name = "scipy" },
-    { name = "tensorflow" },
-    { name = "tensorflow-datasets" },
-    { name = "tqdm" },
-    { name = "typing-extensions" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "black" },
-    { name = "mypy" },
-    { name = "pre-commit" },
-    { name = "pyright" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "black", marker = "extra == 'dev'", specifier = "==24.10.0" },
-    { name = "chex", specifier = "==0.1.87" },
-    { name = "clu", specifier = "==0.0.12" },
-    { name = "flax", specifier = "==0.10.2" },
-    { name = "jax", extras = ["cpu"], specifier = "==0.4.35" },
-    { name = "jaxtyping", specifier = "==0.2.34" },
-    { name = "matplotlib", specifier = "==3.9.2" },
-    { name = "ml-collections", specifier = "==1.0.0" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = "==1.13.0" },
-    { name = "numpy", specifier = "==2.0.2" },
-    { name = "optax", specifier = "==0.2.4" },
-    { name = "orbax-checkpoint", specifier = "==0.8.0" },
-    { name = "pillow", specifier = "==11.0.0" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = "==4.0.1" },
-    { name = "pycocotools", specifier = "==2.0.8" },
-    { name = "pyright", marker = "extra == 'dev'", specifier = "==1.1.390" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = "==8.3.4" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = "==6.0.0" },
-    { name = "pyyaml", specifier = "==6.0.2" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = "==0.8.4" },
-    { name = "scipy", specifier = "==1.14.1" },
-    { name = "tensorflow", specifier = "==2.18.0" },
-    { name = "tensorflow-datasets", specifier = "==4.9.7" },
-    { name = "tqdm", specifier = "==4.67.1" },
-    { name = "typing-extensions", specifier = "==4.12.2" },
-]
-provides-extras = ["dev"]
 
 [[package]]
 name = "fonttools"
