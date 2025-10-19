@@ -34,7 +34,7 @@ def _as_float_array(values: Sequence[float]) -> jnp.ndarray:
     return jnp.asarray(values, dtype=jnp.float32)
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=True)
 class AnchorGenerator:
     """Generator for multi-scale, multi-aspect-ratio anchor boxes.
 

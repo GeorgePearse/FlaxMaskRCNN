@@ -5,7 +5,7 @@ from __future__ import annotations
 import jax.numpy as jnp
 import numpy as np
 
-from detectax.models.utils import nms
+from detectax.models.utils.nms import nms
 
 
 def _extract_kept(indices: jnp.ndarray, count: jnp.ndarray) -> np.ndarray:
@@ -17,7 +17,7 @@ def test_overlapping_boxes_are_suppressed() -> None:
     boxes = jnp.asarray(
         [
             [0.0, 0.0, 2.0, 2.0],
-            [0.5, 0.5, 2.5, 2.5],
+            [0.1, 0.1, 2.0, 2.0],
             [3.0, 3.0, 5.0, 5.0],
         ],
         dtype=jnp.float32,
@@ -51,14 +51,14 @@ def test_score_ordering_respected() -> None:
     boxes = jnp.asarray(
         [
             [0.0, 0.0, 1.0, 1.0],
-            [0.0, 0.0, 1.5, 1.5],
-            [0.0, 0.0, 2.0, 2.0],
+            [2.0, 2.0, 3.0, 3.0],
+            [4.0, 4.0, 5.0, 5.0],
         ],
         dtype=jnp.float32,
     )
     scores = jnp.asarray([0.5, 0.8, 0.9], dtype=jnp.float32)
 
-    result = nms(boxes, scores, iou_threshold=0.2, max_output_size=2)
+    result = nms(boxes, scores, iou_threshold=0.3, max_output_size=2)
     kept = _extract_kept(result.indices, result.valid_counts)
 
     np.testing.assert_array_equal(kept, np.array([2, 1], dtype=np.int32))
@@ -74,7 +74,7 @@ def test_batch_processing_handles_multiple_images() -> None:
             ],
             [
                 [1.0, 1.0, 2.0, 2.0],
-                [1.5, 1.5, 2.5, 2.5],
+                [1.05, 1.05, 2.05, 2.05],
                 [3.0, 3.0, 4.0, 4.0],
             ],
         ],

@@ -87,7 +87,7 @@ def _nms_single(
             operand: tuple[Int[Array, ""], Int[Array, ""], Array, Array, Int[Array, ""]],
         ) -> tuple[Int[Array, ""], Int[Array, ""], Array, Array]:
             idx_i, count, mask, selected, candidate = operand
-            candidate_box = boxes[candidate : candidate + 1]
+            candidate_box = jax.lax.dynamic_slice(boxes, (candidate, 0), (1, boxes.shape[1]))
             ious = box_iou(candidate_box, boxes)[0]
             new_mask = jnp.logical_or(mask, ious > iou_threshold)
             new_mask = new_mask.at[candidate].set(True)
