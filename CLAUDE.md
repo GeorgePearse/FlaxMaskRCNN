@@ -255,6 +255,177 @@ mcp__zen__clink(
 - **Use continuation_id**: Reuse continuation_id across clink calls to maintain context across multiple Codex sessions
 - **Prefer Codex for porting**: When porting from PyTorch reference, Codex excels at maintaining semantic equivalence
 
+## Background Task Orchestration Workflow
+
+**CRITICAL: Claude Code's role in this project is TASK ORCHESTRATOR, not implementer.**
+
+All architecture implementation tasks MUST be executed in background via Codex/clink. This maximizes throughput by running multiple tasks in parallel while Claude Code manages coordination, reviews implementations, and validates results.
+
+### The Orchestration Model
+
+**Claude Code Responsibilities:**
+1. **Task Creation**: Break down architecture work into granular tasks (see ARCHITECTURE_TASKS.md)
+2. **Parallel Assignment**: Launch as many independent tasks as possible simultaneously
+3. **Progress Monitoring**: Track task completion via background bash processes
+4. **Implementation Review**: Verify generated code against specs when tasks complete
+5. **Quality Validation**: Run tests, check types, ensure correctness
+6. **Integration**: Commit validated implementations and update progress tracking
+
+**Codex Responsibilities (via clink):**
+1. **Implementation**: Generate complete, production-ready code
+2. **Testing**: Create comprehensive test suites
+3. **Documentation**: Add docstrings and type annotations
+4. **Autonomy**: Handle entire implementation lifecycle for assigned task
+
+### Task Definition Format
+
+All tasks are defined as JSON files in the `/tasks` directory (version controlled):
+
+```json
+{
+  "prompt": "Implement Task X.Y: [Task Name] as described in ARCHITECTURE_TASKS.md.\n\nCreate [file path] for [purpose].\n\nRequirements:\n- [detailed requirements]\n- [technical specifications]\n- [edge cases]\n\nAlso create tests in [test file path]:\n- [test scenario 1]\n- [test scenario 2]\n\nUpdate [related files].\n\nReference: [reference implementations]",
+  "cli_name": "codex",
+  "files": [
+    "/absolute/path/to/reference1.py",
+    "/absolute/path/to/reference2.py"
+  ]
+}
+```
+
+**Key Principles:**
+- **Absolute paths only**: All file references must be absolute
+- **Complete specifications**: Include requirements, edge cases, test scenarios
+- **Reference context**: Provide reference implementations for pattern matching
+- **Self-contained**: Each task should be executable independently
+
+### Parallel Execution Pattern
+
+**Step 1: Create task definitions in /tasks directory**
+
+```bash
+# Example: Sprint 1 tasks
+/tasks/sprint_1/task_1_2_box_coder.json
+/tasks/sprint_1/task_1_3_nms.json
+/tasks/sprint_1/task_1_4_iou.json
+```
+
+**Step 2: Launch tasks in parallel via background bash**
+
+```bash
+#!/bin/bash
+cd /home/georgepearse/FlaxMaskRCNN
+
+# Launch multiple Codex tasks in background
+(cat /tasks/sprint_1/task_1_2_box_coder.json | codex exec --json --dangerously-bypass-approvals-and-sandbox > /tmp/task_1_2_output.json 2>&1) &
+(cat /tasks/sprint_1/task_1_3_nms.json | codex exec --json --dangerously-bypass-approvals-and-sandbox > /tmp/task_1_3_output.json 2>&1) &
+(cat /tasks/sprint_1/task_1_4_iou.json | codex exec --json --dangerously-bypass-approvals-and-sandbox > /tmp/task_1_4_output.json 2>&1) &
+
+# PIDs captured for monitoring
+echo "Tasks launched: Box Coder, NMS, IoU"
+wait
+echo "All tasks complete"
+```
+
+**Step 3: Review implementations as they complete**
+
+```python
+# Claude Code monitors task completion and reviews
+# When task completes:
+# 1. Read generated implementation files
+# 2. Verify against task requirements
+# 3. Run tests: uv run pytest tests/test_*.py -v
+# 4. Check types: uv run pyright
+# 5. If all pass: git add + commit
+# 6. If failures: analyze, fix, or reassign to Codex
+```
+
+### Review Checklist
+
+When tasks complete, Claude Code verifies:
+
+✅ **Code Quality**
+- [ ] All functions have complete type annotations (jaxtyping)
+- [ ] Docstrings present and comprehensive
+- [ ] Follows JAX/Flax functional patterns
+- [ ] No mutable state or side effects
+
+✅ **Correctness**
+- [ ] Implementation matches ARCHITECTURE_TASKS.md specification
+- [ ] All edge cases handled (zero-area boxes, empty inputs, etc.)
+- [ ] Numerical stability considerations (epsilon for division, clipping)
+
+✅ **Testing**
+- [ ] All tests pass: `uv run pytest tests/test_*.py -v`
+- [ ] Test coverage includes edge cases
+- [ ] Tests verify shapes, gradients, and numerical correctness
+
+✅ **Integration**
+- [ ] Exports added to `__init__.py`
+- [ ] No import errors or circular dependencies
+- [ ] Type checking passes: `uv run pyright`
+
+✅ **Documentation**
+- [ ] ARCHITECTURE_TASKS.md progress updated
+- [ ] Commit message references task number and spec
+
+### Workflow Example: Sprint 1 (Tasks 1.2-1.4)
+
+```python
+# 1. Claude Code creates task definitions
+# (Already done - see /tasks/sprint_1/*.json)
+
+# 2. Launch parallel Codex tasks
+Bash(command="bash /tasks/sprint_1/run_parallel.sh", run_in_background=True)
+
+# 3. Monitor progress (Claude Code checks periodically)
+BashOutput(bash_id="...")  # Check task completion
+
+# 4. Review implementations as they complete
+Read("detectax/models/utils/box_coder.py")  # Review generated code
+Read("tests/test_box_coder.py")  # Review generated tests
+
+# 5. Validate
+Bash("uv run pytest tests/test_box_coder.py -v")  # Run tests
+
+# 6. Commit if valid
+Bash("git add detectax/models/utils/box_coder.py tests/test_box_coder.py")
+Bash('git commit -m "feat: Implement box encoding/decoding (Task 1.2)"')
+
+# 7. Repeat for all completed tasks
+# 8. Update ARCHITECTURE_TASKS.md progress tracking
+```
+
+### Task Assignment Strategy
+
+**Maximum Parallelism:**
+- Identify all tasks with satisfied dependencies
+- Launch ALL independent tasks simultaneously
+- Example: Sprint 1 tasks 1.2, 1.3, 1.4 have no inter-dependencies → launch all 3 in parallel
+
+**Dependency Management:**
+- Sprint 2 (RPN) depends on Sprint 1 (utils) → wait for Sprint 1 completion
+- Within a sprint, identify independent sub-tasks and parallelize
+- Use ARCHITECTURE_TASKS.md dependency graph to determine launch order
+
+**Resource Considerations:**
+- Codex can handle multiple parallel tasks efficiently
+- Typical batch size: 3-5 tasks per sprint
+- For large sprints, launch in waves (e.g., 4 tasks, review, next 4 tasks)
+
+### Failure Handling
+
+If a task fails or produces incorrect implementation:
+
+1. **Analyze**: Review Codex output logs in `/tmp/task_*_output.json`
+2. **Diagnose**: Identify if issue is:
+   - Incomplete specification (fix task JSON, rerun)
+   - Codex misunderstanding (rephrase prompt, rerun)
+   - Genuine edge case (add to requirements, rerun)
+3. **Reassign**: Update task JSON and rerun Codex with clarifications
+4. **Iterate**: Repeat until implementation passes all checks
+
+**Never implement directly** - always delegate back to Codex with improved specifications.
+
 ## Resources
 
 - JAX Documentation: https://jax.readthedocs.io/
