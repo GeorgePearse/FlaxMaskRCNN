@@ -446,20 +446,60 @@ class MaskRCNN(nn.Module):
             full_targets[pos_indices] = np.asarray(mask_targets_pos, dtype=np.float32)
             return full_targets
 
+        def _mask_targets_impl(
+            proposals_i: jnp.ndarray,
+            gt_boxes_i: jnp.ndarray,
+            gt_masks_i: jnp.ndarray,
+            positive_mask_i: jnp.ndarray,
+            valid_gt_mask_i: jnp.ndarray,
+        ) -> jnp.ndarray:
+            return jax.pure_callback(
+                mask_targets_callback,
+                mask_target_shape,
+                proposals_i,
+                gt_boxes_i,
+                gt_masks_i,
+                positive_mask_i,
+                valid_gt_mask_i,
+            )
+
+        @jax.custom_jvp
+        def mask_targets_with_zero_grad(
+            proposals_i: jnp.ndarray,
+            gt_boxes_i: jnp.ndarray,
+            gt_masks_i: jnp.ndarray,
+            positive_mask_i: jnp.ndarray,
+            valid_gt_mask_i: jnp.ndarray,
+        ) -> jnp.ndarray:
+            return _mask_targets_impl(
+                proposals_i,
+                gt_boxes_i,
+                gt_masks_i,
+                positive_mask_i,
+                valid_gt_mask_i,
+            )
+
+        @mask_targets_with_zero_grad.defjvp
+        def mask_targets_with_zero_grad_jvp(primals, tangents):  # noqa: D401 - short custom JVP rule
+            del tangents  # Mask targets have no gradient dependency.
+            primal_out = _mask_targets_impl(*primals)
+            tangent_out = jnp.zeros_like(primal_out)
+            return primal_out, tangent_out
+
         def assign_for_one_image(
             gt_boxes_i: Float[Array, "num_targets 4"],
             gt_labels_i: Int[Array, num_targets],
             gt_masks_i: Float[Array, "num_targets mask_h mask_w"],
             proposals_i: Float[Array, "num_rois 4"],
         ) -> tuple[
-            Int[Array, "num_anchors"],
+            Int[Array, num_anchors],
             Float[Array, "num_anchors 4"],
-            Float[Array, "num_anchors"],
-            Int[Array, "num_rois"],
+            Float[Array, num_anchors],
+            Int[Array, num_rois],
             Float[Array, "num_rois num_classes 4"],
-            Float[Array, "num_rois"],
+            Float[Array, num_rois],
             Float[Array, "num_rois mask_h mask_w"],
-            Bool[Array, "num_rois"],
+            Bool[Array, num_rois],
         ]:
             valid_gt_mask = gt_labels_i > 0
             gt_boxes_filtered = jnp.where(valid_gt_mask[:, None], gt_boxes_i, 0.0)
@@ -495,9 +535,7 @@ class MaskRCNN(nn.Module):
             else:
                 mask_targets_i = jax.lax.cond(
                     jnp.any(positive_mask_i),
-                    lambda _: jax.pure_callback(
-                        mask_targets_callback,
-                        mask_target_shape,
+                    lambda _: mask_targets_with_zero_grad(
                         proposals_i,
                         gt_boxes_filtered,
                         gt_masks_i,
@@ -601,7 +639,8 @@ class MaskRCNN(nn.Module):
             "det_cls": det_cls_loss,
             "det_reg": det_reg_loss,
             "mask": mask_loss_value,
-            "total": total,
+            "loss": total,  # Training loop expects "loss" key
+            "total": total,  # Keep for logging
         }
 
     def _format_predictions(
@@ -641,7 +680,7 @@ class MaskRCNN(nn.Module):
         def format_one_image(
             image_boxes: Float[Array, "num_rois 4"],
             image_fg_probs: Float[Array, "num_rois num_classes"],
-            image_objectness: Float[Array, "num_rois"],
+            image_objectness: Float[Array, num_rois],
             image_masks: Float[Array, "num_rois mask_h mask_w num_classes"],
         ) -> dict[str, Array]:
             per_image_max = image_boxes.shape[0]
