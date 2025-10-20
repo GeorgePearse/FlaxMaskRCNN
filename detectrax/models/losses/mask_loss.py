@@ -163,15 +163,14 @@ def mask_loss(
     roi_mask = positive_mask[..., None, None]
     num_positive = jnp.sum(positive_mask.astype(jnp.float32))
 
-    def no_positives() -> Float[Array, ""]:
-        return jnp.asarray(0.0, dtype=loss_per_pixel.dtype)
+    # Safe normalization: prevent division by zero in both forward and backward pass
+    total_pixels = num_positive * (mask_height * mask_width)
+    safe_total_pixels = jnp.maximum(total_pixels, 1.0)  # Prevent division by zero
+    loss_sum = jnp.sum(loss_per_pixel * roi_mask)
+    loss = loss_sum / safe_total_pixels
 
-    def positives_present() -> Float[Array, ""]:
-        total_pixels = num_positive * (mask_height * mask_width)
-        loss_sum = jnp.sum(loss_per_pixel * roi_mask)
-        return loss_sum / total_pixels
-
-    return jax.lax.cond(num_positive > 0, positives_present, no_positives)
+    # Zero out loss when there are no positives
+    return jnp.where(num_positive > 0, loss, 0.0)
 
 
 __all__ = ["mask_loss"]
