@@ -352,29 +352,25 @@ class MaskRCNN(nn.Module):
         output_size: tuple[int, int],
         image_shape: tuple[int, int],
     ) -> Float[Array, "batch num_boxes out_h out_w channels"]:
-        """Apply RoI Align independently for each image in the batch."""
-        batch_size = feature_map.shape[0]
-        num_boxes = boxes.shape[1]
+        """Apply RoI Align using ``jax.vmap`` across the batch dimension."""
         out_h, out_w = output_size
+        channels = feature_map.shape[-1]
         spatial_scale = feature_map.shape[1] / float(image_shape[0])
 
-        aligned_outputs: list[Float[Array, "num_boxes out_h out_w channels"]] = []
-        for i in range(batch_size):
-            image_boxes = boxes[i]
-            single_feature = feature_map[i : i + 1]
-            if num_boxes == 0:
-                aligned = jnp.zeros((0, out_h, out_w, feature_map.shape[-1]), dtype=feature_map.dtype)
-            else:
-                aligned = roi_align(
-                    single_feature,
-                    image_boxes,
-                    output_size=output_size,
-                    spatial_scale=spatial_scale,
-                )
-            aligned_outputs.append(aligned)
+        def align_single_image(
+            feats: Float[Array, "height width channels"],
+            boxes_per_image: Float[Array, "num_boxes 4"],
+        ) -> Float[Array, "num_boxes out_h out_w channels"]:
+            if boxes_per_image.shape[0] == 0:
+                return jnp.zeros((0, out_h, out_w, channels), dtype=feats.dtype)
+            return roi_align(
+                feats[None, ...],
+                boxes_per_image,
+                output_size=output_size,
+                spatial_scale=spatial_scale,
+            )
 
-        stacked = jnp.stack(aligned_outputs, axis=0)
-        return stacked
+        return jax.vmap(align_single_image, in_axes=(0, 0))(feature_map, boxes)
 
     def _clip_boxes(
         self,
@@ -406,110 +402,135 @@ class MaskRCNN(nn.Module):
         anchors_concat = jnp.concatenate(anchor_sequences, axis=0) if anchor_sequences else jnp.zeros((0, 4), dtype=jnp.float32)
 
         batch_size, num_rois = proposals.shape[:2]
+        num_targets = targets.boxes.shape[1]
         num_classes = self.config.num_classes
-
-        rpn_objectness_list: list[jnp.ndarray] = []
-        rpn_deltas_list: list[jnp.ndarray] = []
-        rpn_weights_list: list[jnp.ndarray] = []
-        detection_labels_list: list[jnp.ndarray] = []
-        detection_deltas_list: list[jnp.ndarray] = []
-        detection_weights_list: list[jnp.ndarray] = []
-
-        mask_targets_np = np.zeros((batch_size, num_rois, mask_height, mask_width), dtype=np.float32)
-        mask_positive_np = np.zeros((batch_size, num_rois), dtype=bool)
+        class_dim = num_classes + 1  # Include background channel.
 
         has_masks = targets.masks is not None
+        mask_placeholder = jnp.zeros((batch_size, num_targets, mask_height, mask_width), dtype=jnp.float32)
+        gt_masks = targets.masks if has_masks else mask_placeholder
 
-        for i in range(batch_size):
-            gt_boxes_np = np.asarray(targets.boxes[i])
-            gt_labels_np = np.asarray(targets.labels[i])
-            masks_per_image = targets.masks[i] if has_masks else ()
+        mask_target_shape = jax.ShapeDtypeStruct((num_rois, mask_height, mask_width), jnp.float32)
 
-            valid_indices = np.where(gt_labels_np > 0)[0]
-            if valid_indices.size > 0:
-                boxes_valid = jnp.asarray(gt_boxes_np[valid_indices], dtype=jnp.float32)
-                labels_valid = jnp.asarray(gt_labels_np[valid_indices], dtype=jnp.int32)
-                if has_masks:
-                    if isinstance(masks_per_image, (list, tuple)):
-                        masks_valid = [masks_per_image[int(idx)] for idx in valid_indices]
-                    else:
-                        masks_np = np.asarray(masks_per_image)
-                        masks_valid = [masks_np[int(idx)] for idx in valid_indices]
-                else:
-                    masks_valid = []
-            else:
-                boxes_valid = jnp.zeros((0, 4), dtype=jnp.float32)
-                labels_valid = jnp.zeros((0,), dtype=jnp.int32)
-                masks_valid = []
+        def mask_targets_callback(
+            proposals_i: jnp.ndarray,
+            gt_boxes_i: jnp.ndarray,
+            gt_masks_i: jnp.ndarray,
+            positive_mask_i: jnp.ndarray,
+            valid_gt_mask_i: jnp.ndarray,
+        ) -> np.ndarray:
+            proposals_np = np.asarray(proposals_i, dtype=np.float32)
+            gt_boxes_np = np.asarray(gt_boxes_i, dtype=np.float32)
+            gt_masks_np = np.asarray(gt_masks_i)
+            positive_np = np.asarray(positive_mask_i, dtype=bool)
+            valid_gt_np = np.asarray(valid_gt_mask_i, dtype=bool)
 
-            rpn_labels_i, rpn_deltas_i, rpn_weights_i = assign_rpn_targets(anchors_concat, boxes_valid, labels_valid)
-            rpn_objectness_list.append(rpn_labels_i.astype(jnp.int32))
-            rpn_deltas_list.append(rpn_deltas_i.astype(jnp.float32))
-            rpn_weights_list.append(rpn_weights_i.astype(jnp.float32))
+            pos_indices = np.nonzero(positive_np)[0]
+            valid_gt_indices = np.nonzero(valid_gt_np)[0]
 
-            proposals_i = proposals[i]
-            if boxes_valid.shape[0] > 0:
-                det_labels_i, det_deltas_full, _ = assign_detection_targets(
-                    proposals_i,
-                    boxes_valid,
-                    labels_valid,
-                )
-            else:
-                det_labels_i = jnp.zeros((num_rois,), dtype=jnp.int32)
-                if num_classes > 0:
-                    det_deltas_full = jnp.zeros((num_rois, num_classes + 1, 4), dtype=jnp.float32)
-                else:
-                    det_deltas_full = jnp.zeros((num_rois, 1, 4), dtype=jnp.float32)
+            if pos_indices.size == 0 or valid_gt_indices.size == 0:
+                return np.zeros((num_rois, mask_height, mask_width), dtype=np.float32)
 
-            if num_classes > 0:
-                if det_deltas_full.shape[1] == num_classes + 1:
-                    det_deltas = det_deltas_full[:, 1:, :]
-                elif det_deltas_full.shape[1] == num_classes:
-                    det_deltas = det_deltas_full
-                else:
-                    raise ValueError(
-                        f"Detection target class dimension {det_deltas_full.shape[1]} does not match configured num_classes {num_classes}."
-                    )
-            else:
-                det_deltas = jnp.zeros((num_rois, 0, 4), dtype=jnp.float32)
+            proposals_pos = proposals_np[pos_indices]
+            boxes_valid = gt_boxes_np[valid_gt_indices]
+            masks_valid = [np.asarray(gt_masks_np[idx]) for idx in valid_gt_indices]
+
+            mask_targets_pos = generate_mask_targets(
+                proposals_pos,
+                boxes_valid,
+                masks_valid,
+                mask_size=mask_height,
+            )
+
+            full_targets = np.zeros((num_rois, mask_height, mask_width), dtype=np.float32)
+            full_targets[pos_indices] = np.asarray(mask_targets_pos, dtype=np.float32)
+            return full_targets
+
+        def assign_for_one_image(
+            gt_boxes_i: Float[Array, "num_targets 4"],
+            gt_labels_i: Int[Array, num_targets],
+            gt_masks_i: Float[Array, "num_targets mask_h mask_w"],
+            proposals_i: Float[Array, "num_rois 4"],
+        ) -> tuple[
+            Int[Array, "num_anchors"],
+            Float[Array, "num_anchors 4"],
+            Float[Array, "num_anchors"],
+            Int[Array, "num_rois"],
+            Float[Array, "num_rois num_classes 4"],
+            Float[Array, "num_rois"],
+            Float[Array, "num_rois mask_h mask_w"],
+            Bool[Array, "num_rois"],
+        ]:
+            valid_gt_mask = gt_labels_i > 0
+            gt_boxes_filtered = jnp.where(valid_gt_mask[:, None], gt_boxes_i, 0.0)
+            rpn_labels_input = jnp.where(valid_gt_mask, gt_labels_i, -jnp.ones_like(gt_labels_i))
+
+            rpn_labels_i, rpn_deltas_i, rpn_weights_i = assign_rpn_targets(
+                anchors_concat,
+                gt_boxes_filtered,
+                rpn_labels_input,
+            )
+
+            labels_clipped = jnp.clip(gt_labels_i, 0, num_classes)
+            gt_labels_one_hot = jax.nn.one_hot(labels_clipped, class_dim, dtype=jnp.float32)
+            gt_labels_one_hot = gt_labels_one_hot * valid_gt_mask[:, None]
+
+            det_labels_i, det_deltas_full, _ = assign_detection_targets(
+                proposals_i,
+                gt_boxes_filtered,
+                gt_labels_one_hot,
+            )
 
             det_labels_i = jnp.clip(det_labels_i, 0, num_classes)
-            detection_labels_list.append(det_labels_i.astype(jnp.int32))
-            detection_deltas_list.append(det_deltas.astype(jnp.float32))
+            if num_classes > 0:
+                det_deltas_i = det_deltas_full[:, 1:, :]
+            else:
+                det_deltas_i = jnp.zeros((num_rois, 0, 4), dtype=jnp.float32)
 
-            roi_weights_i = jnp.where(det_labels_i >= 0, 1.0, 0.0).astype(jnp.float32)
-            detection_weights_list.append(roi_weights_i)
+            detection_weights_i = jnp.where(det_labels_i >= 0, 1.0, 0.0).astype(jnp.float32)
+            positive_mask_i = det_labels_i > 0
 
-            positive_mask = np.asarray(det_labels_i > 0, dtype=bool)
-            mask_positive_np[i] = positive_mask
-            if positive_mask.any() and masks_valid:
-                pos_indices = np.where(positive_mask)[0]
-                mask_size = mask_height
-                mask_targets_pos = generate_mask_targets(
-                    np.asarray(proposals_i)[pos_indices],
-                    np.asarray(boxes_valid),
-                    masks_valid,
-                    mask_size=mask_size,
+            if not has_masks:
+                mask_targets_i = jnp.zeros((num_rois, mask_height, mask_width), dtype=jnp.float32)
+            else:
+                mask_targets_i = jax.lax.cond(
+                    jnp.any(positive_mask_i),
+                    lambda _: jax.pure_callback(
+                        mask_targets_callback,
+                        mask_target_shape,
+                        proposals_i,
+                        gt_boxes_filtered,
+                        gt_masks_i,
+                        positive_mask_i,
+                        valid_gt_mask,
+                    ),
+                    lambda _: jnp.zeros((num_rois, mask_height, mask_width), dtype=jnp.float32),
+                    operand=None,
                 )
-                mask_targets_np[i, pos_indices, :, :] = np.asarray(mask_targets_pos)
 
-        rpn_objectness = jnp.stack(rpn_objectness_list, axis=0) if rpn_objectness_list else jnp.zeros((0, 0), dtype=jnp.int32)
-        rpn_deltas = jnp.stack(rpn_deltas_list, axis=0) if rpn_deltas_list else jnp.zeros((0, 0, 4), dtype=jnp.float32)
-        rpn_weights = jnp.stack(rpn_weights_list, axis=0) if rpn_weights_list else jnp.zeros((0, 0), dtype=jnp.float32)
+            return (
+                rpn_labels_i.astype(jnp.int32),
+                rpn_deltas_i.astype(jnp.float32),
+                rpn_weights_i.astype(jnp.float32),
+                det_labels_i.astype(jnp.int32),
+                det_deltas_i.astype(jnp.float32),
+                detection_weights_i,
+                mask_targets_i.astype(jnp.float32),
+                positive_mask_i,
+            )
 
-        detection_labels = jnp.stack(detection_labels_list, axis=0) if detection_labels_list else jnp.zeros((0, 0), dtype=jnp.int32)
-        detection_deltas = (
-            jnp.stack(detection_deltas_list, axis=0)
-            if detection_deltas_list
-            else jnp.zeros((0, 0, max(self.config.num_classes, 0), 4), dtype=jnp.float32)
-        )
-        detection_weights = jnp.stack(detection_weights_list, axis=0) if detection_weights_list else jnp.zeros((0, 0), dtype=jnp.float32)
+        (
+            rpn_objectness,
+            rpn_deltas,
+            rpn_weights,
+            detection_labels,
+            detection_deltas,
+            detection_weights,
+            mask_targets_array,
+            mask_positive,
+        ) = jax.vmap(assign_for_one_image, in_axes=(0, 0, 0, 0))(targets.boxes, targets.labels, gt_masks, proposals)
 
-        mask_targets = MaskHeadTargets(
-            masks=jnp.asarray(mask_targets_np, dtype=jnp.float32),
-            classes=detection_labels,
-        )
-        mask_positive = jnp.asarray(mask_positive_np, dtype=jnp.bool_)
+        mask_targets = MaskHeadTargets(masks=mask_targets_array, classes=detection_labels)
 
         return AssignedTargets(
             rpn_objectness=rpn_objectness,
@@ -594,122 +615,111 @@ class MaskRCNN(nn.Module):
         class_probs = jax.nn.softmax(cls_logits, axis=-1)
         mask_probs = jax.nn.sigmoid(mask_logits)
 
-        if self.config.num_classes == 0:
-            zero_scores = jnp.zeros_like(objectness_scores)
-            zero_labels = jnp.zeros_like(objectness_scores, dtype=jnp.int32)
-            zero_masks = jnp.zeros(
-                (boxes.shape[0], boxes.shape[1], mask_probs.shape[2], mask_probs.shape[3]),
-                dtype=mask_probs.dtype,
-            )
-
-            predictions = []
-            for i in range(boxes.shape[0]):
-                predictions.append(
-                    {
-                        "boxes": boxes[i],
-                        "scores": zero_scores[i],
-                        "labels": zero_labels[i],
-                        "masks": zero_masks[i],
-                    }
-                )
-            return predictions
-
-        fg_probs = class_probs[..., 1:]
-
         batch_size = boxes.shape[0]
-        per_image_max = boxes.shape[1]
+        num_rois = boxes.shape[1]
         mask_height = mask_probs.shape[2]
         mask_width = mask_probs.shape[3]
 
-        predictions: list[dict[str, Float[Array, ...]]] = []
+        if self.config.num_classes == 0:
+            zero_scores = jnp.zeros_like(objectness_scores)
+            zero_labels = jnp.zeros_like(objectness_scores, dtype=jnp.int32)
+            zero_masks = jnp.zeros((batch_size, num_rois, mask_height, mask_width), dtype=mask_probs.dtype)
+            return [
+                {
+                    "boxes": boxes[i],
+                    "scores": zero_scores[i],
+                    "labels": zero_labels[i],
+                    "masks": zero_masks[i],
+                }
+                for i in range(batch_size)
+            ]
 
-        for i in range(batch_size):
-            image_boxes = boxes[i]
-            image_fg_probs = fg_probs[i]
-            image_objectness = objectness_scores[i]
-            image_masks = mask_probs[i]
+        fg_probs = class_probs[..., 1:]
 
+        class_indices = jnp.arange(self.config.num_classes, dtype=jnp.int32)
+
+        def format_one_image(
+            image_boxes: Float[Array, "num_rois 4"],
+            image_fg_probs: Float[Array, "num_rois num_classes"],
+            image_objectness: Float[Array, "num_rois"],
+            image_masks: Float[Array, "num_rois mask_h mask_w num_classes"],
+        ) -> dict[str, Array]:
+            per_image_max = image_boxes.shape[0]
             if per_image_max == 0:
-                predictions.append(
-                    {
-                        "boxes": image_boxes,
-                        "scores": jnp.zeros((0,), dtype=image_objectness.dtype),
-                        "labels": jnp.zeros((0,), dtype=jnp.int32),
-                        "masks": jnp.zeros((0, mask_height, mask_width), dtype=image_masks.dtype),
-                    }
-                )
-                continue
+                empty_scores = jnp.zeros((0,), dtype=image_objectness.dtype)
+                empty_boxes = jnp.zeros((0, 4), dtype=image_boxes.dtype)
+                empty_labels = jnp.zeros((0,), dtype=jnp.int32)
+                empty_masks = jnp.zeros((0, mask_height, mask_width), dtype=image_masks.dtype)
+                return {
+                    "boxes": empty_boxes,
+                    "scores": empty_scores,
+                    "labels": empty_labels,
+                    "masks": empty_masks,
+                    "num_detections": jnp.asarray(0, dtype=jnp.int32),
+                }
 
-            per_class_boxes = []
-            per_class_scores = []
-            per_class_labels = []
-            per_class_masks = []
-
-            for class_idx in range(self.config.num_classes):
+            def process_one_class(class_idx: jnp.int32) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
                 class_scores = image_fg_probs[:, class_idx] * image_objectness
                 nms_result = nms(image_boxes, class_scores, iou_threshold=0.5, max_output_size=per_image_max)
-                class_indices = nms_result.indices
-                valid_mask = class_indices >= 0
-                safe_indices = jnp.where(valid_mask, class_indices, 0)
+                valid_mask = jnp.arange(per_image_max, dtype=jnp.int32) < nms_result.valid_counts
+                safe_indices = jnp.where(valid_mask, nms_result.indices, 0)
 
-                selected_boxes = jnp.take(image_boxes, safe_indices, axis=0)
-                selected_scores = jnp.take(class_scores, safe_indices, axis=0)
-                selected_masks = jnp.take(image_masks[..., class_idx], safe_indices, axis=0)
-
-                selected_boxes = jnp.where(valid_mask[:, None], selected_boxes, 0.0)
-                selected_scores = jnp.where(valid_mask, selected_scores, 0.0)
+                selected_boxes = jnp.take(image_boxes, safe_indices, axis=0, mode="clip")
+                selected_scores = jnp.take(class_scores, safe_indices, axis=0, mode="clip")
+                selected_masks = jnp.take(image_masks[..., class_idx], safe_indices, axis=0, mode="clip")
                 label_values = jnp.full((per_image_max,), class_idx + 1, dtype=jnp.int32)
-                selected_labels = jnp.where(valid_mask, label_values, 0)
-                selected_masks = jnp.where(valid_mask[:, None, None], selected_masks, 0.0)
 
-                per_class_boxes.append(selected_boxes)
-                per_class_scores.append(selected_scores)
-                per_class_labels.append(selected_labels)
-                per_class_masks.append(selected_masks)
-
-            boxes_stack = jnp.stack(per_class_boxes, axis=0)
-            scores_stack = jnp.stack(per_class_scores, axis=0)
-            labels_stack = jnp.stack(per_class_labels, axis=0)
-            masks_stack = jnp.stack(per_class_masks, axis=0)
-
-            flat_boxes = boxes_stack.reshape((-1, 4))
-            flat_scores = scores_stack.reshape((-1,))
-            flat_labels = labels_stack.reshape((-1,))
-            flat_masks = masks_stack.reshape((-1, mask_height, mask_width))
-
-            top_k = min(per_image_max, flat_scores.shape[0])
-            if top_k == 0:
-                predictions.append(
-                    {
-                        "boxes": jnp.zeros((0, 4), dtype=image_boxes.dtype),
-                        "scores": jnp.zeros((0,), dtype=image_objectness.dtype),
-                        "labels": jnp.zeros((0,), dtype=jnp.int32),
-                        "masks": jnp.zeros((0, mask_height, mask_width), dtype=image_masks.dtype),
-                    }
+                return (
+                    jnp.where(valid_mask[:, None], selected_boxes, 0.0),
+                    jnp.where(valid_mask, selected_scores, 0.0),
+                    jnp.where(valid_mask, label_values, 0),
+                    jnp.where(valid_mask[:, None, None], selected_masks, 0.0),
                 )
-                continue
 
-            top_scores, top_indices = jax.lax.top_k(flat_scores, k=top_k)
-            top_boxes = jnp.take(flat_boxes, top_indices, axis=0)
-            top_labels = jnp.take(flat_labels, top_indices, axis=0)
-            top_masks = jnp.take(flat_masks, top_indices, axis=0)
+            boxes_cls, scores_cls, labels_cls, masks_cls = jax.vmap(process_one_class)(class_indices)
+
+            flat_boxes = boxes_cls.reshape((-1, 4))
+            flat_scores = scores_cls.reshape((-1,))
+            flat_labels = labels_cls.reshape((-1,))
+            flat_masks = masks_cls.reshape((-1, mask_height, mask_width))
+
+            top_scores, top_indices = jax.lax.top_k(flat_scores, k=per_image_max)
+            top_boxes = jnp.take(flat_boxes, top_indices, axis=0, mode="clip")
+            top_labels = jnp.take(flat_labels, top_indices, axis=0, mode="clip")
+            top_masks = jnp.take(flat_masks, top_indices, axis=0, mode="clip")
 
             valid_top = top_scores > self.config.score_threshold
+            num_detections = jnp.sum(valid_top.astype(jnp.int32))
+
+            final_boxes = jnp.where(valid_top[:, None], top_boxes, 0.0)
             final_scores = jnp.where(valid_top, top_scores, 0.0)
             final_labels = jnp.where(valid_top, top_labels, 0).astype(jnp.int32)
-            final_boxes = jnp.where(valid_top[:, None], top_boxes, 0.0)
             final_masks = jnp.where(valid_top[:, None, None], top_masks, 0.0)
 
-            predictions.append(
-                {
-                    "boxes": final_boxes,
-                    "scores": final_scores,
-                    "labels": final_labels,
-                    "masks": final_masks,
-                }
-            )
+            return {
+                "boxes": final_boxes,
+                "scores": final_scores,
+                "labels": final_labels,
+                "masks": final_masks,
+                "num_detections": num_detections,
+            }
 
-        return predictions
+        predictions_tree = jax.vmap(format_one_image, in_axes=(0, 0, 0, 0))(
+            boxes,
+            fg_probs,
+            objectness_scores,
+            mask_probs,
+        )
+
+        return [
+            {
+                "boxes": predictions_tree["boxes"][i][: predictions_tree["num_detections"][i]],
+                "scores": predictions_tree["scores"][i][: predictions_tree["num_detections"][i]],
+                "labels": predictions_tree["labels"][i][: predictions_tree["num_detections"][i]],
+                "masks": predictions_tree["masks"][i][: predictions_tree["num_detections"][i]],
+            }
+            for i in range(batch_size)
+        ]
 
 
 __all__ = ["MaskRCNN", "MaskRCNNConfig", "MaskRCNNTargets"]
