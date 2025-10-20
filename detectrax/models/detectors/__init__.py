@@ -1,4 +1,4 @@
-"""Detector modules exposed by detectax."""
+"""Detector modules exposed by detectrax."""
 
 from .mask_rcnn import MaskRCNN, MaskRCNNConfig, MaskRCNNTargets
 

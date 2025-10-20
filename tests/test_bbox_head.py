@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import pytest
 
-from detectax.models.layers.roi_align import roi_align
-from detectax.models.roi_heads.bbox_heads import BBoxHead
+from detectrax.models.layers.roi_align import roi_align
+from detectrax.models.roi_heads.bbox_heads import BBoxHead
 
 jax = pytest.importorskip("jax")
 jnp = pytest.importorskip("jax.numpy")
 
 
 class TestBBoxHead:
-    """Comprehensive test-suite for :class:`~detectax.models.roi_heads.bbox_heads.BBoxHead`."""
+    """Comprehensive test-suite for :class:`~detectrax.models.roi_heads.bbox_heads.BBoxHead`."""
 
     @pytest.fixture
     def rng_key(self) -> jax.Array:

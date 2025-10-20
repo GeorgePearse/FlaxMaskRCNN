@@ -27,7 +27,7 @@ Gradient norms computed successfully
 ### Get Number of Classes from COCO
 
 ```python
-from detectax.data.coco_utils import get_num_classes_from_coco
+from detectrax.data.coco_utils import get_num_classes_from_coco
 
 num_classes = get_num_classes_from_coco("/path/to/annotations.json")
 # CMR dataset: 68 classes
@@ -40,45 +40,45 @@ num_classes = get_num_classes_from_coco("/path/to/annotations.json")
 ### All 24 Architecture Tasks Complete
 
 **Sprint 1 - Foundational Utilities** ✅
-- Anchor Generator (`detectax/models/utils/anchor_generator.py`)
-- Box Encoder/Decoder (`detectax/models/utils/box_coder.py`)
-- IoU Computation (`detectax/models/utils/iou.py`)
-- NMS (`detectax/models/utils/nms.py`)
-- RoI Align (`detectax/models/layers/roi_align.py`)
+- Anchor Generator (`detectrax/models/utils/anchor_generator.py`)
+- Box Encoder/Decoder (`detectrax/models/utils/box_coder.py`)
+- IoU Computation (`detectrax/models/utils/iou.py`)
+- NMS (`detectrax/models/utils/nms.py`)
+- RoI Align (`detectrax/models/layers/roi_align.py`)
 
 **Sprint 2 - RPN Components** ✅
-- RPN Head (`detectax/models/heads/rpn_head.py`)
-- RPN Target Assignment (`detectax/models/task_modules/assigners/rpn_assigner.py`)
-- Proposal Generation (`detectax/models/task_modules/proposal_generator.py`)
-- RPN Loss (`detectax/models/losses/rpn_loss.py`)
+- RPN Head (`detectrax/models/heads/rpn_head.py`)
+- RPN Target Assignment (`detectrax/models/task_modules/assigners/rpn_assigner.py`)
+- Proposal Generation (`detectrax/models/task_modules/proposal_generator.py`)
+- RPN Loss (`detectrax/models/losses/rpn_loss.py`)
 
 **Sprint 3 - Detection Head** ✅
-- RoI Head Base (`detectax/models/roi_heads/base_roi_head.py`)
-- BBox Head (`detectax/models/roi_heads/bbox_heads/bbox_head.py`)
-- Detection Assignment (`detectax/models/task_modules/assigners/detection_assigner.py`)
-- Detection Post-processing (`detectax/models/task_modules/post_processors/detection_postprocessor.py`)
-- Detection Loss (`detectax/models/losses/detection_loss.py`)
+- RoI Head Base (`detectrax/models/roi_heads/base_roi_head.py`)
+- BBox Head (`detectrax/models/roi_heads/bbox_heads/bbox_head.py`)
+- Detection Assignment (`detectrax/models/task_modules/assigners/detection_assigner.py`)
+- Detection Post-processing (`detectrax/models/task_modules/post_processors/detection_postprocessor.py`)
+- Detection Loss (`detectrax/models/losses/detection_loss.py`)
 
 **Sprint 4 - Mask Head** ✅
-- FCN Mask Head (`detectax/models/roi_heads/mask_heads/fcn_mask_head.py`)
-- Mask Target Generation (`detectax/models/task_modules/mask_target_generator.py`)
-- Mask Post-processing (`detectax/models/task_modules/post_processors/mask_postprocessor.py`)
-- Mask Loss (`detectax/models/losses/mask_loss.py`)
+- FCN Mask Head (`detectrax/models/roi_heads/mask_heads/fcn_mask_head.py`)
+- Mask Target Generation (`detectrax/models/task_modules/mask_target_generator.py`)
+- Mask Post-processing (`detectrax/models/task_modules/post_processors/mask_postprocessor.py`)
+- Mask Loss (`detectrax/models/losses/mask_loss.py`)
 
 **Sprint 5 - Integration** ✅
-- Complete Mask R-CNN Detector (`detectax/models/detectors/mask_rcnn.py`)
+- Complete Mask R-CNN Detector (`detectrax/models/detectors/mask_rcnn.py`)
 - Real supervised training (no placeholders)
 - NMS integration (RPN: 0.7, Detection: 0.5)
 - Vectorized batch operations with jax.vmap
 
 **Sprint 6 - Training Infrastructure** ✅
-- Training Loop (`detectax/training/train.py`)
-- LR Schedules (`detectax/training/schedules.py`)
+- Training Loop (`detectrax/training/train.py`)
+- LR Schedules (`detectrax/training/schedules.py`)
 - Data Augmentations
 - Checkpointing with orbax
 
 **Sprint 7 - Evaluation** ✅
-- COCO Evaluator (`detectax/evaluation/coco_evaluator.py`)
+- COCO Evaluator (`detectrax/evaluation/coco_evaluator.py`)
 - COCO Metrics (Box AP, Mask AP)
 
 ---
@@ -194,8 +194,8 @@ Number of detections (image 0): 100
 ### 1. Full COCO Training
 
 ```python
-from detectax.data.coco_utils import get_num_classes_from_coco
-from detectax.models.detectors.mask_rcnn import MaskRCNN, MaskRCNNConfig
+from detectrax.data.coco_utils import get_num_classes_from_coco
+from detectrax.models.detectors.mask_rcnn import MaskRCNN, MaskRCNNConfig
 
 # Detect classes from your dataset
 num_classes = get_num_classes_from_coco("/path/to/train.json")
@@ -212,7 +212,7 @@ config = MaskRCNNConfig(
 model = MaskRCNN(config)
 
 # Run training loop
-# See detectax/training/train.py for full training infrastructure
+# See detectrax/training/train.py for full training infrastructure
 ```
 
 ### 2. Hyperparameter Tuning
@@ -227,7 +227,7 @@ Consider tuning:
 ### 3. Evaluation Metrics
 
 ```python
-from detectax.evaluation.coco_evaluator import COCOEvaluator
+from detectrax.evaluation.coco_evaluator import COCOEvaluator
 
 evaluator = COCOEvaluator(annotation_file="val.json")
 # Run inference on validation set
@@ -260,7 +260,7 @@ The model is ready for:
 
 ```
 FlaxMaskRCNN/
-├── detectax/
+├── detectrax/
 │   ├── data/              # COCO utilities
 │   ├── evaluation/        # COCO evaluator
 │   ├── models/

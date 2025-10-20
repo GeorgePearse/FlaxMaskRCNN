@@ -6,8 +6,8 @@ import jax
 import jax.numpy as jnp
 from jaxtyping import Array, Float, Int
 
-from detectax.models.utils.box_coder import encode_boxes
-from detectax.models.utils.iou import box_iou
+from detectrax.models.utils.box_coder import encode_boxes
+from detectrax.models.utils.iou import box_iou
 
 ProposalArray = Float[Array, "num_proposals 4"]
 GTBoxArray = Float[Array, "num_gt 4"]

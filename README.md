@@ -7,7 +7,7 @@
 ⚠️ **Experimental hobby project** - This is very much a work-in-progress mess-around repo, largely AI-generated code. Not production-ready by any means!
 
 ```python
-import detectax as dax
+import detectrax as dax
 
 # Load model and run inference
 model = dax.MaskRCNN(num_classes=80)
@@ -36,7 +36,7 @@ uv sync
 uv run pytest -v
 
 # Train on COCO dataset (coming soon)
-uv run python -m detectax.training.train --config configs/mask_rcnn_r50_fpn.yaml
+uv run python -m detectrax.training.train --config configs/mask_rcnn_r50_fpn.yaml
 ```
 
 ## Installation
@@ -83,7 +83,7 @@ pip install --upgrade "jax[cuda12]"
 
 ```bash
 # Train Mask R-CNN on COCO dataset
-uv run python -m detectax.training.train \\
+uv run python -m detectrax.training.train \\
   --config configs/mask_rcnn_r50_fpn.yaml \\
   --data_dir <path-to-coco> \\
   --output_dir ./runs/experiment1
@@ -93,7 +93,7 @@ uv run python -m detectax.training.train \\
 
 ```bash
 # Evaluate model on COCO val set
-uv run python -m detectax.evaluation.evaluate \\
+uv run python -m detectrax.evaluation.evaluate \\
   --config configs/mask_rcnn_r50_fpn.yaml \\
   --checkpoint <path-to-checkpoint> \\
   --data_dir <path-to-coco>
@@ -128,8 +128,8 @@ See [docs/datasets.md](docs/datasets.md) for detailed dataset configuration.
 ## Project Structure
 
 ```
-detectax/
-├── detectax/
+detectrax/
+├── detectrax/
 │   ├── models/
 │   │   ├── backbones/      # Feature extractors (ResNet, ViT)
 │   │   ├── necks/          # FPN implementation
@@ -198,7 +198,7 @@ uv run pytest && uv run pyright && uv run ruff check .
 uv run pytest -v
 
 # Run with coverage
-uv run pytest --cov=detectax --cov-report=html
+uv run pytest --cov=detectrax --cov-report=html
 
 # Run specific test file
 uv run pytest tests/test_fpn.py -v
@@ -349,7 +349,7 @@ See [LICENSE](LICENSE) file for details.
 If you use Detectax in your research, please cite:
 
 ```bibtex
-@software{detectax2025,
+@software{detectrax2025,
   title={Detectax: Experimental Mask R-CNN in JAX/Flax},
   author={Your Name},
   year={2025},

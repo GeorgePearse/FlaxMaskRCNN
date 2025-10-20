@@ -24,7 +24,7 @@ from jax import image as jimage
 from jaxtyping import Array, Float
 from pycocotools import mask as mask_utils
 
-from detectax.models.utils import box_iou
+from detectrax.models.utils import box_iou
 
 # Type alias for the variety of mask annotations we accept.
 MaskAnnotation = Any

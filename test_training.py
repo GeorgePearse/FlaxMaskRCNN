@@ -3,7 +3,7 @@
 import jax
 import jax.numpy as jnp
 
-from detectax.models.detectors.mask_rcnn import MaskRCNN, MaskRCNNConfig, MaskRCNNTargets
+from detectrax.models.detectors.mask_rcnn import MaskRCNN, MaskRCNNConfig, MaskRCNNTargets
 
 
 def create_minimal_config() -> MaskRCNNConfig:

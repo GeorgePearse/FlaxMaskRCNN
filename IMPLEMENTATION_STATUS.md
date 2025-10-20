@@ -106,13 +106,13 @@ All Codex-generated implementations must meet:
 ## Files Generated
 
 Implementations will be created in:
-- `detectax/models/heads/` - RPN, Detection, Mask heads
-- `detectax/models/roi_heads/` - RoI extraction and processing
-- `detectax/models/losses/` - Training losses
-- `detectax/models/detectors/` - Complete Mask R-CNN
-- `detectax/data/` - COCO loader, augmentations
-- `detectax/training/` - Training loop, schedules
-- `detectax/evaluation/` - COCO metrics
+- `detectrax/models/heads/` - RPN, Detection, Mask heads
+- `detectrax/models/roi_heads/` - RoI extraction and processing
+- `detectrax/models/losses/` - Training losses
+- `detectrax/models/detectors/` - Complete Mask R-CNN
+- `detectrax/data/` - COCO loader, augmentations
+- `detectrax/training/` - Training loop, schedules
+- `detectrax/evaluation/` - COCO metrics
 - `tests/` - Comprehensive test suites
 
 **Estimated total LOC**: ~5000+ lines of production JAX/Flax code

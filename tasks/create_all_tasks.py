@@ -12,14 +12,14 @@ SPRINT_3_TASKS = [
     {
         "file": "sprint_3/task_3_1_roi_head_base.json",
         "task_name": "Task 3.1: RoI Head Base Class",
-        "output_file": "detectax/models/roi_heads/base_roi_head.py",
+        "output_file": "detectrax/models/roi_heads/base_roi_head.py",
         "test_file": "tests/test_roi_head.py",
         "description": """Implement RoI Head base class for two-stage detectors.
 
 Requirements:
 - Flax nn.Module class BaseRoIHead
 - Abstract methods for box_head, get_targets, get_predictions, loss
-- RoI extraction using RoI Align from detectax.models.layers.roi_align
+- RoI extraction using RoI Align from detectrax.models.layers.roi_align
 - Support multi-scale FPN features (P2-P6)
 - Configurable RoI resolution (7x7, 14x14)
 - Full jaxtyping annotations
@@ -30,12 +30,12 @@ Tests:
 - Multi-scale handling
 - Batch processing
 - Abstract method enforcement""",
-        "references": ["reference/visdet_models/roi_heads/base_roi_head.py", "detectax/models/layers/roi_align.py"],
+        "references": ["reference/visdet_models/roi_heads/base_roi_head.py", "detectrax/models/layers/roi_align.py"],
     },
     {
         "file": "sprint_3/task_3_2_box_head.json",
         "task_name": "Task 3.2: Box Head (Classification + Regression)",
-        "output_file": "detectax/models/roi_heads/bbox_heads/bbox_head.py",
+        "output_file": "detectrax/models/roi_heads/bbox_heads/bbox_head.py",
         "test_file": "tests/test_bbox_head.py",
         "description": """Implement Box Head for final classification and box regression.
 
@@ -62,7 +62,7 @@ Tests:
     {
         "file": "sprint_3/task_3_3_detection_assigner.json",
         "task_name": "Task 3.3: Detection Target Assignment",
-        "output_file": "detectax/models/task_modules/assigners/detection_assigner.py",
+        "output_file": "detectrax/models/task_modules/assigners/detection_assigner.py",
         "test_file": "tests/test_detection_assigner.py",
         "description": """Implement target assignment for detection head (2nd stage).
 
@@ -86,7 +86,7 @@ Tests:
     {
         "file": "sprint_3/task_3_4_detection_postprocess.json",
         "task_name": "Task 3.4: Detection Post-Processing",
-        "output_file": "detectax/models/task_modules/post_processors/detection_postprocessor.py",
+        "output_file": "detectrax/models/task_modules/post_processors/detection_postprocessor.py",
         "test_file": "tests/test_detection_postprocessor.py",
         "description": """Implement post-processing for final detections.
 
@@ -113,7 +113,7 @@ SPRINT_4_TASKS = [
     {
         "file": "sprint_4/task_4_1_mask_head.json",
         "task_name": "Task 4.1: Mask Head Module",
-        "output_file": "detectax/models/roi_heads/mask_heads/fcn_mask_head.py",
+        "output_file": "detectrax/models/roi_heads/mask_heads/fcn_mask_head.py",
         "test_file": "tests/test_mask_head.py",
         "description": """Implement FCN Mask Head for instance segmentation.
 
@@ -136,7 +136,7 @@ Tests:
     {
         "file": "sprint_4/task_4_2_mask_targets.json",
         "task_name": "Task 4.2: Mask Target Generation",
-        "output_file": "detectax/models/task_modules/mask_target_generator.py",
+        "output_file": "detectrax/models/task_modules/mask_target_generator.py",
         "test_file": "tests/test_mask_targets.py",
         "description": """Implement mask target generation for training.
 
@@ -159,7 +159,7 @@ Tests:
     {
         "file": "sprint_4/task_4_3_mask_postprocess.json",
         "task_name": "Task 4.3: Mask Post-Processing",
-        "output_file": "detectax/models/task_modules/post_processors/mask_postprocessor.py",
+        "output_file": "detectrax/models/task_modules/post_processors/mask_postprocessor.py",
         "test_file": "tests/test_mask_postprocess.py",
         "description": """Implement mask post-processing for inference.
 
@@ -185,7 +185,7 @@ SPRINT_5_TASKS = [
     {
         "file": "sprint_5/task_5_1_rpn_loss.json",
         "task_name": "Task 5.1: RPN Loss",
-        "output_file": "detectax/models/losses/rpn_loss.py",
+        "output_file": "detectrax/models/losses/rpn_loss.py",
         "test_file": "tests/test_rpn_loss.py",
         "description": """Implement RPN training loss.
 
@@ -207,7 +207,7 @@ Tests:
     {
         "file": "sprint_5/task_5_2_detection_loss.json",
         "task_name": "Task 5.2: Detection Loss",
-        "output_file": "detectax/models/losses/detection_loss.py",
+        "output_file": "detectrax/models/losses/detection_loss.py",
         "test_file": "tests/test_detection_loss.py",
         "description": """Implement detection head training loss.
 
@@ -228,7 +228,7 @@ Tests:
     {
         "file": "sprint_5/task_5_3_mask_loss.json",
         "task_name": "Task 5.3: Mask Loss",
-        "output_file": "detectax/models/losses/mask_loss.py",
+        "output_file": "detectrax/models/losses/mask_loss.py",
         "test_file": "tests/test_mask_loss.py",
         "description": """Implement mask head training loss.
 

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from pycocotools import mask as mask_utils
 
-from detectax.evaluation import COCOEvaluator
+from detectrax.evaluation import COCOEvaluator
 
 
 def _write_dummy_annotations(tmp_path):

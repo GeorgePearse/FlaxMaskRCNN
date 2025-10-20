@@ -34,7 +34,7 @@ jobs:
         from pathlib import Path
 
         missing_docstrings = []
-        for py_file in Path('detectax').rglob('*.py'):
+        for py_file in Path('detectrax').rglob('*.py'):
             if py_file.name.startswith('test_'):
                 continue
             with open(py_file) as f:

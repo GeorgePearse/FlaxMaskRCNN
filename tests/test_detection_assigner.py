@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from detectax.models.task_modules.assigners import assign_detection_targets
-from detectax.models.utils import encode_boxes
+from detectrax.models.task_modules.assigners import assign_detection_targets
+from detectrax.models.utils import encode_boxes
 
 jax = pytest.importorskip("jax")
 jnp = pytest.importorskip("jax.numpy")

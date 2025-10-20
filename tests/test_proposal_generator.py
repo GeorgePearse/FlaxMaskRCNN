@@ -5,7 +5,7 @@ from __future__ import annotations
 import jax.numpy as jnp
 import numpy as np
 
-from detectax.models.task_modules.proposal_generator import generate_proposals
+from detectrax.models.task_modules.proposal_generator import generate_proposals
 
 
 def _call_generator(

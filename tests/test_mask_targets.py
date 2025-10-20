@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import numpy as np
 from pycocotools import mask as mask_utils
 
-from detectax.models.task_modules import generate_mask_targets
+from detectrax.models.task_modules import generate_mask_targets
 
 
 def test_generate_mask_targets_crops_binary_mask() -> None:

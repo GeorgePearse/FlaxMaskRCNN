@@ -5,7 +5,7 @@ from __future__ import annotations
 import jax.numpy as jnp
 import numpy as np
 
-from detectax.models.utils import box_iou, giou
+from detectrax.models.utils import box_iou, giou
 
 
 def test_perfect_overlap_returns_one() -> None:

@@ -5,7 +5,7 @@ from __future__ import annotations
 import jax.numpy as jnp
 import numpy as np
 
-from detectax.models.utils.nms import nms
+from detectrax.models.utils.nms import nms
 
 
 def _extract_kept(indices: jnp.ndarray, count: jnp.ndarray) -> np.ndarray:

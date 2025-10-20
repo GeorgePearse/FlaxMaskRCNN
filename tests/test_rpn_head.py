@@ -9,8 +9,8 @@ import jax.numpy as jnp
 import pytest
 from jax import tree_util
 
-from detectax.models.heads.rpn_head import RPNHead
-from detectax.models.utils.anchor_generator import AnchorGenerator
+from detectrax.models.heads.rpn_head import RPNHead
+from detectrax.models.utils.anchor_generator import AnchorGenerator
 
 
 def _build_fpn_features(
@@ -29,7 +29,7 @@ def _build_fpn_features(
 
 
 class TestRPNHead:
-    """Test-suite for :class:`~detectax.models.heads.rpn_head.RPNHead`."""
+    """Test-suite for :class:`~detectrax.models.heads.rpn_head.RPNHead`."""
 
     @pytest.fixture
     def rng_key(self) -> jax.Array:

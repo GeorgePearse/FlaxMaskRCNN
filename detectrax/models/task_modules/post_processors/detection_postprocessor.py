@@ -23,8 +23,8 @@ import jax
 import jax.numpy as jnp
 from jaxtyping import Array, Float, Int
 
-from detectax.models.utils.box_coder import decode_boxes
-from detectax.models.utils.nms import nms
+from detectrax.models.utils.box_coder import decode_boxes
+from detectrax.models.utils.nms import nms
 
 _NUM_DETECTIONS = "num_detections"
 _NUM_DETECTIONS_WITH_COORDS = "num_detections 4"

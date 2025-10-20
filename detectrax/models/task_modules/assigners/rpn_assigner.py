@@ -5,8 +5,8 @@ from __future__ import annotations
 import jax.numpy as jnp
 from jaxtyping import Array, Float, Int
 
-from detectax.models.utils.box_coder import encode_boxes
-from detectax.models.utils.iou import box_iou
+from detectrax.models.utils.box_coder import encode_boxes
+from detectrax.models.utils.iou import box_iou
 
 _M_AXIS = "M"
 _M_WITH_COORDS = "M 4"

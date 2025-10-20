@@ -7,7 +7,7 @@ import math
 import numpy as np
 import pytest
 
-from detectax.training import (
+from detectrax.training import (
     CosineDecayConfig,
     LearningRateScheduleConfig,
     StepDecayConfig,

@@ -8,7 +8,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from detectax.models.losses import mask_loss
+from detectrax.models.losses import mask_loss
 
 
 def _targets(masks: jnp.ndarray, classes: jnp.ndarray) -> dict:

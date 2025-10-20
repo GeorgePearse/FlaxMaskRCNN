@@ -7,7 +7,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from detectax.models.task_modules.post_processors import postprocess_detections
+from detectrax.models.task_modules.post_processors import postprocess_detections
 
 
 def _extract_single_detection_output(output):

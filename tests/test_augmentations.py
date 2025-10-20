@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-from detectax.data.augmentations import AugmentationConfig, augment_example
+from detectrax.data.augmentations import AugmentationConfig, augment_example
 
 
 def test_horizontal_flip_updates_boxes_and_masks() -> None:

@@ -10,7 +10,7 @@ import jax
 import jax.numpy as jnp
 from flax import linen as nn
 
-from detectax.training import train as training_lib
+from detectrax.training import train as training_lib
 from ml_collections import ConfigDict
 
 

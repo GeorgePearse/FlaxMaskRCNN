@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from detectax.models.losses import detection_loss
+from detectrax.models.losses import detection_loss
 
 jax = pytest.importorskip("jax")
 jnp = pytest.importorskip("jax.numpy")

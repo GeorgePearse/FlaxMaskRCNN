@@ -6,7 +6,7 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-from detectax.models.roi_heads import BaseRoIHead
+from detectrax.models.roi_heads import BaseRoIHead
 
 
 @pytest.fixture(autouse=True)
@@ -19,7 +19,7 @@ def fast_roi_align(monkeypatch):
         return jnp.full((boxes.shape[0], output_size[0], output_size[1], features.shape[-1]), value, dtype=features.dtype)
 
     monkeypatch.setattr(
-        "detectax.models.roi_heads.base_roi_head.roi_align",
+        "detectrax.models.roi_heads.base_roi_head.roi_align",
         _stub_roi_align,
     )
 

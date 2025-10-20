@@ -3,7 +3,8 @@
 import jax
 import jax.numpy as jnp
 import pytest
-from detectax.models.necks.fpn import FPN
+
+from detectrax.models.necks.fpn import FPN
 
 
 class TestFPN:
@@ -48,21 +49,17 @@ class TestFPN:
 
         # Check output shapes
         expected_shapes = [
-            (2, 64, 64, 256),   # P2
-            (2, 32, 32, 256),   # P3
-            (2, 16, 16, 256),   # P4
-            (2, 8, 8, 256),     # P5
+            (2, 64, 64, 256),  # P2
+            (2, 32, 32, 256),  # P3
+            (2, 16, 16, 256),  # P4
+            (2, 8, 8, 256),  # P5
         ]
         for i, (output, expected_shape) in enumerate(zip(outputs, expected_shapes)):
-            assert output.shape == expected_shape, (
-                f"P{i+2} shape mismatch: expected {expected_shape}, got {output.shape}"
-            )
+            assert output.shape == expected_shape, f"P{i + 2} shape mismatch: expected {expected_shape}, got {output.shape}"
 
         # Check all outputs have same channel dimension
         for i, output in enumerate(outputs):
-            assert output.shape[-1] == 256, (
-                f"P{i+2} channels mismatch: expected 256, got {output.shape[-1]}"
-            )
+            assert output.shape[-1] == 256, f"P{i + 2} channels mismatch: expected 256, got {output.shape[-1]}"
 
     def test_fpn_with_extra_levels(self, rng_key: jax.Array, resnet_features: tuple) -> None:
         """Test FPN with extra pyramid levels (e.g., P6)."""
@@ -70,7 +67,7 @@ class TestFPN:
             in_channels=[256, 512, 1024, 2048],
             out_channels=256,
             num_outs=5,  # P2, P3, P4, P5, P6
-            add_extra_convs='on_input',
+            add_extra_convs="on_input",
         )
 
         variables = fpn.init(rng_key, resnet_features)
@@ -81,16 +78,14 @@ class TestFPN:
 
         # Check output shapes (including P6)
         expected_shapes = [
-            (2, 64, 64, 256),   # P2
-            (2, 32, 32, 256),   # P3
-            (2, 16, 16, 256),   # P4
-            (2, 8, 8, 256),     # P5
-            (2, 4, 4, 256),     # P6 (stride 64, downsampled from P5)
+            (2, 64, 64, 256),  # P2
+            (2, 32, 32, 256),  # P3
+            (2, 16, 16, 256),  # P4
+            (2, 8, 8, 256),  # P5
+            (2, 4, 4, 256),  # P6 (stride 64, downsampled from P5)
         ]
         for i, (output, expected_shape) in enumerate(zip(outputs, expected_shapes)):
-            assert output.shape == expected_shape, (
-                f"P{i+2} shape mismatch: expected {expected_shape}, got {output.shape}"
-            )
+            assert output.shape == expected_shape, f"P{i + 2} shape mismatch: expected {expected_shape}, got {output.shape}"
 
     def test_fpn_extra_convs_on_lateral(self, rng_key: jax.Array, resnet_features: tuple) -> None:
         """Test FPN with extra convs from lateral features."""
@@ -98,7 +93,7 @@ class TestFPN:
             in_channels=[256, 512, 1024, 2048],
             out_channels=256,
             num_outs=5,
-            add_extra_convs='on_lateral',
+            add_extra_convs="on_lateral",
         )
 
         variables = fpn.init(rng_key, resnet_features)
@@ -113,7 +108,7 @@ class TestFPN:
             in_channels=[256, 512, 1024, 2048],
             out_channels=256,
             num_outs=5,
-            add_extra_convs='on_output',
+            add_extra_convs="on_output",
         )
 
         variables = fpn.init(rng_key, resnet_features)
@@ -130,7 +125,7 @@ class TestFPN:
             out_channels=256,
             num_outs=3,
             start_level=1,  # Start from C3
-            end_level=3,    # End at C5 (inclusive)
+            end_level=3,  # End at C5 (inclusive)
         )
 
         variables = fpn.init(rng_key, resnet_features)
@@ -139,9 +134,9 @@ class TestFPN:
         # Should output P3, P4, P5
         assert len(outputs) == 3
         expected_shapes = [
-            (2, 32, 32, 256),   # P3
-            (2, 16, 16, 256),   # P4
-            (2, 8, 8, 256),     # P5
+            (2, 32, 32, 256),  # P3
+            (2, 16, 16, 256),  # P4
+            (2, 8, 8, 256),  # P5
         ]
         for output, expected_shape in zip(outputs, expected_shapes):
             assert output.shape == expected_shape
@@ -220,12 +215,10 @@ class TestFPN:
         )
 
         variables = fpn.init(rng_key, resnet_features)
-        params = variables['params']
+        params = variables["params"]
 
         # Count total parameters
-        total_params = sum(
-            p.size for p in jax.tree.leaves(params)
-        )
+        total_params = sum(p.size for p in jax.tree.leaves(params))
 
         # FPN should have a reasonable number of params
         # Rough estimate: 4 lateral 1x1 convs + 4 FPN 3x3 convs
@@ -234,9 +227,7 @@ class TestFPN:
         min_params = 10_000
         max_params = 10_000_000
 
-        assert min_params < total_params < max_params, (
-            f"Parameter count {total_params} seems unreasonable"
-        )
+        assert min_params < total_params < max_params, f"Parameter count {total_params} seems unreasonable"
 
     def test_fpn_invalid_config_raises(self, rng_key: jax.Array, resnet_features: tuple) -> None:
         """Test FPN raises errors for invalid configurations."""
@@ -246,7 +237,7 @@ class TestFPN:
                 in_channels=[256, 512, 1024, 2048],
                 out_channels=256,
                 num_outs=4,
-                add_extra_convs='invalid_mode',  # type: ignore
+                add_extra_convs="invalid_mode",  # type: ignore
             )
             fpn.init(rng_key, resnet_features)
 
@@ -259,12 +250,12 @@ class TestFPN:
         )
 
         def loss_fn(params, inputs):
-            outputs = fpn.apply({'params': params}, inputs)
+            outputs = fpn.apply({"params": params}, inputs)
             # Simple loss: sum of all outputs
             return sum(jnp.sum(o) for o in outputs)
 
         variables = fpn.init(rng_key, resnet_features)
-        params = variables['params']
+        params = variables["params"]
 
         # Compute gradients
         grads = jax.grad(loss_fn)(params, resnet_features)

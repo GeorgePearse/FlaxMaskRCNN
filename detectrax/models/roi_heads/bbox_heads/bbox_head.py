@@ -9,7 +9,7 @@ import jax
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from detectax.models.roi_heads.base_roi_head import BaseRoIHead
+from detectrax.models.roi_heads.base_roi_head import BaseRoIHead
 
 RoIBatch = Float[Array, "batch rois height width channels"]
 BoxFeatures = Float[Array, "batch rois hidden"]

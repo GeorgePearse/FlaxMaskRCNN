@@ -3,9 +3,10 @@
 import jax
 import jax.numpy as jnp
 import pytest
-from detectax.models.backbones.resnet import ResNetBackbone
-from detectax.models.heads.rpn import RPN, RPNHead
-from detectax.models.layers.roi_align import roi_align, roi_pool
+
+from detectrax.models.backbones.resnet import ResNetBackbone
+from detectrax.models.heads.rpn import RPN, RPNHead
+from detectrax.models.layers.roi_align import roi_align, roi_pool
 
 
 class TestResNetBackbone:
@@ -21,10 +22,10 @@ class TestResNetBackbone:
 
         # Check we get 4 feature levels
         assert len(features) == 4
-        assert 'stage_1' in features
-        assert 'stage_2' in features
-        assert 'stage_3' in features
-        assert 'stage_4' in features
+        assert "stage_1" in features
+        assert "stage_2" in features
+        assert "stage_3" in features
+        assert "stage_4" in features
 
     def test_backbone_feature_channels(self):
         """Test backbone feature channels match ResNet-50."""
@@ -35,10 +36,10 @@ class TestResNetBackbone:
         features = backbone.apply(variables, images, train=False)
 
         # ResNet-50 channel dimensions
-        assert features['stage_1'].shape[-1] == 256   # C2
-        assert features['stage_2'].shape[-1] == 512   # C3
-        assert features['stage_3'].shape[-1] == 1024  # C4
-        assert features['stage_4'].shape[-1] == 2048  # C5
+        assert features["stage_1"].shape[-1] == 256  # C2
+        assert features["stage_2"].shape[-1] == 512  # C3
+        assert features["stage_3"].shape[-1] == 1024  # C4
+        assert features["stage_4"].shape[-1] == 2048  # C5
 
 
 class TestRPNHead:
@@ -114,11 +115,13 @@ class TestRoIAlign:
     def test_roi_align_multiple_boxes(self):
         """Test RoI align with multiple boxes."""
         features = jnp.ones((1, 64, 64, 256))
-        boxes = jnp.array([
-            [10.0, 10.0, 30.0, 30.0],
-            [20.0, 20.0, 40.0, 40.0],
-            [30.0, 30.0, 50.0, 50.0],
-        ])
+        boxes = jnp.array(
+            [
+                [10.0, 10.0, 30.0, 30.0],
+                [20.0, 20.0, 40.0, 40.0],
+                [30.0, 30.0, 50.0, 50.0],
+            ]
+        )
 
         aligned = roi_align(features, boxes, output_size=(7, 7))
 
@@ -154,7 +157,7 @@ class TestIntegration:
 
     def test_backbone_to_fpn_to_rpn(self):
         """Test data flow from backbone through FPN to RPN."""
-        from detectax.models.necks.fpn import FPN
+        from detectrax.models.necks.fpn import FPN
 
         # Backbone
         backbone = ResNetBackbone(num_layers=50)
@@ -164,10 +167,10 @@ class TestIntegration:
 
         # Convert dict to list for FPN
         features_list = [
-            features_dict['stage_1'],  # C2: 256 channels
-            features_dict['stage_2'],  # C3: 512 channels
-            features_dict['stage_3'],  # C4: 1024 channels
-            features_dict['stage_4'],  # C5: 2048 channels
+            features_dict["stage_1"],  # C2: 256 channels
+            features_dict["stage_2"],  # C3: 512 channels
+            features_dict["stage_3"],  # C4: 1024 channels
+            features_dict["stage_4"],  # C5: 2048 channels
         ]
 
         # FPN
@@ -175,7 +178,7 @@ class TestIntegration:
             in_channels=[256, 512, 1024, 2048],
             out_channels=256,
             num_outs=5,
-            add_extra_convs='on_input',
+            add_extra_convs="on_input",
         )
         fpn_vars = fpn.init(jax.random.PRNGKey(1), features_list)
         fpn_feats = fpn.apply(fpn_vars, features_list)

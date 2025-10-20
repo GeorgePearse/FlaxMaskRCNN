@@ -31,7 +31,7 @@ This document provides a comprehensive, ultra-granular breakdown of all remainin
 **Estimated Lines**: ~150
 
 **Description**:
-Create `detectax/models/utils/anchor_generator.py` that generates anchor boxes at multiple scales and aspect ratios for each feature pyramid level.
+Create `detectrax/models/utils/anchor_generator.py` that generates anchor boxes at multiple scales and aspect ratios for each feature pyramid level.
 
 **Requirements**:
 - Generate anchors for FPN levels P2-P6
@@ -60,7 +60,7 @@ Create `detectax/models/utils/anchor_generator.py` that generates anchor boxes a
 **Estimated Lines**: ~100
 
 **Description**:
-Create `detectax/models/utils/box_coder.py` with functions to encode/decode bounding boxes using the standard Faster R-CNN parameterization.
+Create `detectrax/models/utils/box_coder.py` with functions to encode/decode bounding boxes using the standard Faster R-CNN parameterization.
 
 **Requirements**:
 - `encode_boxes(boxes, anchors)`: Convert (x1,y1,x2,y2) to (dx, dy, dw, dh) deltas
@@ -89,7 +89,7 @@ Create `detectax/models/utils/box_coder.py` with functions to encode/decode boun
 **Estimated Lines**: ~80
 
 **Description**:
-Create `detectax/models/utils/nms.py` implementing batched NMS for post-processing detections.
+Create `detectrax/models/utils/nms.py` implementing batched NMS for post-processing detections.
 
 **Requirements**:
 - `nms(boxes, scores, iou_threshold)`: Standard NMS algorithm
@@ -118,7 +118,7 @@ Create `detectax/models/utils/nms.py` implementing batched NMS for post-processi
 **Estimated Lines**: ~60
 
 **Description**:
-Create `detectax/models/utils/iou.py` for computing Intersection over Union between box sets.
+Create `detectrax/models/utils/iou.py` for computing Intersection over Union between box sets.
 
 **Requirements**:
 - `box_iou(boxes1, boxes2)`: Pairwise IoU between two sets of boxes
@@ -150,7 +150,7 @@ Create `detectax/models/utils/iou.py` for computing Intersection over Union betw
 **Estimated Lines**: ~200
 
 **Description**:
-Create `detectax/models/heads/rpn_head.py` implementing the RPN that predicts objectness and box deltas.
+Create `detectrax/models/heads/rpn_head.py` implementing the RPN that predicts objectness and box deltas.
 
 **Requirements**:
 - Flax nn.Module with `__call__(features: dict) -> (objectness, deltas)`
@@ -182,7 +182,7 @@ Create `detectax/models/heads/rpn_head.py` implementing the RPN that predicts ob
 **Estimated Lines**: ~250
 
 **Description**:
-Create `detectax/models/task_modules/assigners/rpn_assigner.py` that assigns ground truth boxes to anchors for RPN training.
+Create `detectrax/models/task_modules/assigners/rpn_assigner.py` that assigns ground truth boxes to anchors for RPN training.
 
 **Requirements**:
 - Assign positive labels to anchors with IoU > 0.7 with any GT box
@@ -214,7 +214,7 @@ Create `detectax/models/task_modules/assigners/rpn_assigner.py` that assigns gro
 **Estimated Lines**: ~180
 
 **Description**:
-Create `detectax/models/task_modules/proposal_generator.py` that converts RPN outputs to final proposals.
+Create `detectrax/models/task_modules/proposal_generator.py` that converts RPN outputs to final proposals.
 
 **Requirements**:
 - Decode box deltas to actual boxes
@@ -248,7 +248,7 @@ Create `detectax/models/task_modules/proposal_generator.py` that converts RPN ou
 **Estimated Lines**: ~100
 
 **Description**:
-Create `detectax/models/roi_heads/base_roi_head.py` with shared logic for detection and mask heads.
+Create `detectrax/models/roi_heads/base_roi_head.py` with shared logic for detection and mask heads.
 
 **Requirements**:
 - Abstract base using Flax nn.Module
@@ -276,7 +276,7 @@ Create `detectax/models/roi_heads/base_roi_head.py` with shared logic for detect
 **Estimated Lines**: ~250
 
 **Description**:
-Create `detectax/models/roi_heads/bbox_head.py` for classifying RoIs and refining boxes.
+Create `detectrax/models/roi_heads/bbox_head.py` for classifying RoIs and refining boxes.
 
 **Requirements**:
 - Flax nn.Module taking pooled RoI features (N, 7, 7, C)
@@ -307,7 +307,7 @@ Create `detectax/models/roi_heads/bbox_head.py` for classifying RoIs and refinin
 **Estimated Lines**: ~300
 
 **Description**:
-Create `detectax/models/task_modules/assigners/detection_assigner.py` for assigning GT to proposals during training.
+Create `detectrax/models/task_modules/assigners/detection_assigner.py` for assigning GT to proposals during training.
 
 **Requirements**:
 - Assign positive labels to proposals with IoU ≥ 0.5 with any GT
@@ -339,7 +339,7 @@ Create `detectax/models/task_modules/assigners/detection_assigner.py` for assign
 **Estimated Lines**: ~200
 
 **Description**:
-Create `detectax/models/task_modules/detection_postprocess.py` for converting raw detections to final outputs.
+Create `detectrax/models/task_modules/detection_postprocess.py` for converting raw detections to final outputs.
 
 **Requirements**:
 - Decode class-specific box deltas
@@ -371,7 +371,7 @@ Create `detectax/models/task_modules/detection_postprocess.py` for converting ra
 **Estimated Lines**: ~200
 
 **Description**:
-Create `detectax/models/roi_heads/mask_head.py` for predicting instance segmentation masks.
+Create `detectrax/models/roi_heads/mask_head.py` for predicting instance segmentation masks.
 
 **Requirements**:
 - Flax nn.Module taking RoI features (N, 14, 14, C)
@@ -401,7 +401,7 @@ Create `detectax/models/roi_heads/mask_head.py` for predicting instance segmenta
 **Estimated Lines**: ~250
 
 **Description**:
-Create `detectax/models/task_modules/mask_targets.py` for generating mask training targets from GT polygons/masks.
+Create `detectrax/models/task_modules/mask_targets.py` for generating mask training targets from GT polygons/masks.
 
 **Requirements**:
 - Convert COCO polygon annotations to binary masks
@@ -432,7 +432,7 @@ Create `detectax/models/task_modules/mask_targets.py` for generating mask traini
 **Estimated Lines**: ~150
 
 **Description**:
-Create `detectax/models/task_modules/mask_postprocess.py` for converting mask logits to final instance masks.
+Create `detectrax/models/task_modules/mask_postprocess.py` for converting mask logits to final instance masks.
 
 **Requirements**:
 - Threshold mask logits at 0.5
@@ -464,7 +464,7 @@ Create `detectax/models/task_modules/mask_postprocess.py` for converting mask lo
 **Estimated Lines**: ~120
 
 **Description**:
-Create `detectax/models/losses/rpn_loss.py` implementing RPN training loss.
+Create `detectrax/models/losses/rpn_loss.py` implementing RPN training loss.
 
 **Requirements**:
 - Binary cross-entropy for objectness classification
@@ -494,7 +494,7 @@ Create `detectax/models/losses/rpn_loss.py` implementing RPN training loss.
 **Estimated Lines**: ~150
 
 **Description**:
-Create `detectax/models/losses/detection_loss.py` for Fast R-CNN detection loss.
+Create `detectrax/models/losses/detection_loss.py` for Fast R-CNN detection loss.
 
 **Requirements**:
 - Cross-entropy loss for classification (num_classes + 1 with background)
@@ -524,7 +524,7 @@ Create `detectax/models/losses/detection_loss.py` for Fast R-CNN detection loss.
 **Estimated Lines**: ~80
 
 **Description**:
-Create `detectax/models/losses/mask_loss.py` for mask prediction loss.
+Create `detectrax/models/losses/mask_loss.py` for mask prediction loss.
 
 **Requirements**:
 - Binary cross-entropy per pixel
@@ -555,7 +555,7 @@ Create `detectax/models/losses/mask_loss.py` for mask prediction loss.
 **Estimated Lines**: ~400
 
 **Description**:
-Create `detectax/models/detectors/mask_rcnn.py` integrating all components into full detector.
+Create `detectrax/models/detectors/mask_rcnn.py` integrating all components into full detector.
 
 **Requirements**:
 - Flax nn.Module combining backbone + FPN + RPN + detection head + mask head
@@ -606,7 +606,7 @@ Mask Head → Masks (M, 28, 28)
 **Estimated Lines**: ~350
 
 **Description**:
-Create `detectax/data/coco_dataset.py` for loading and parsing COCO format datasets.
+Create `detectrax/data/coco_dataset.py` for loading and parsing COCO format datasets.
 
 **Requirements**:
 - Load from COCO JSON annotations
@@ -639,7 +639,7 @@ Create `detectax/data/coco_dataset.py` for loading and parsing COCO format datas
 **Estimated Lines**: ~300
 
 **Description**:
-Create `detectax/data/augmentation.py` with training data augmentations.
+Create `detectrax/data/augmentation.py` with training data augmentations.
 
 **Requirements**:
 - Random horizontal flip (with box + mask flipping)
@@ -673,7 +673,7 @@ Create `detectax/data/augmentation.py` with training data augmentations.
 **Estimated Lines**: ~400
 
 **Description**:
-Create `detectax/training/train.py` with full training loop using JAX patterns.
+Create `detectrax/training/train.py` with full training loop using JAX patterns.
 
 **Requirements**:
 - Use jax.pmap for multi-GPU training
@@ -708,7 +708,7 @@ Create `detectax/training/train.py` with full training loop using JAX patterns.
 **Estimated Lines**: ~100
 
 **Description**:
-Create `detectax/training/lr_schedule.py` with learning rate scheduling functions.
+Create `detectrax/training/lr_schedule.py` with learning rate scheduling functions.
 
 **Requirements**:
 - Warmup schedule (linear rampup for first N iterations)
@@ -740,7 +740,7 @@ Create `detectax/training/lr_schedule.py` with learning rate scheduling function
 **Estimated Lines**: ~250
 
 **Description**:
-Create `detectax/evaluation/coco_evaluator.py` for computing COCO metrics.
+Create `detectrax/evaluation/coco_evaluator.py` for computing COCO metrics.
 
 **Requirements**:
 - Compute box AP (AP, AP50, AP75, APs, APm, APl)
@@ -770,7 +770,7 @@ Create `detectax/evaluation/coco_evaluator.py` for computing COCO metrics.
 **Estimated Lines**: ~200
 
 **Description**:
-Create `detectax/utils/visualization.py` for drawing predictions and GT on images.
+Create `detectrax/utils/visualization.py` for drawing predictions and GT on images.
 
 **Requirements**:
 - Draw bounding boxes with class labels
@@ -873,8 +873,8 @@ mcp__zen__clink(
 
 After Codex completes each task:
 1. Run tests: `uv run pytest tests/test_XXX.py -v`
-2. Check types: `uv run pyright detectax/`
-3. Run linting: `uv run ruff check detectax/`
+2. Check types: `uv run pyright detectrax/`
+3. Run linting: `uv run ruff check detectrax/`
 4. Review implementation for JAX best practices
 5. Commit with descriptive message
 6. Update this checklist

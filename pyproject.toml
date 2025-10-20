@@ -1,5 +1,5 @@
 [project]
-name = "detectax"
+name = "detectrax"
 version = "0.1.0"
 description = "Detectax (Dax): Production-ready Mask R-CNN implementation in JAX/Flax with Scenic infrastructure"
 readme = "README.md"
@@ -42,7 +42,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["detectax*"]
+include = ["detectrax*"]
 
 [tool.ruff]
 line-length = 150

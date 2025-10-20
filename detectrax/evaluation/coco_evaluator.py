@@ -15,7 +15,7 @@ try:
     from pycocotools.coco import COCO
     from pycocotools.cocoeval import COCOeval
 except ImportError as exc:  # pragma: no cover - surfaced via tests
-    raise ImportError("pycocotools is required for COCO evaluation. Install it before using detectax.evaluation.coco_evaluator.") from exc
+    raise ImportError("pycocotools is required for COCO evaluation. Install it before using detectrax.evaluation.coco_evaluator.") from exc
 
 
 _DEFAULT_IOU_THRESHOLDS = tuple(np.linspace(0.5, 0.95, 10))

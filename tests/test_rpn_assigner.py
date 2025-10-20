@@ -6,8 +6,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from detectax.models.task_modules.assigners import assign_rpn_targets
-from detectax.models.utils.box_coder import encode_boxes
+from detectrax.models.task_modules.assigners import assign_rpn_targets
+from detectrax.models.utils.box_coder import encode_boxes
 
 
 def test_positive_assignment_for_high_iou() -> None:

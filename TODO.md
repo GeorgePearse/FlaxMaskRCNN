@@ -18,24 +18,24 @@
 ### 🚧 Phase 2: Core Model Implementation (In Progress - 40%)
 
 #### Completed Components
-- [x] Feature Pyramid Network (FPN) - `detectax/models/necks/fpn.py`
-- [x] ResNet backbone - `detectax/models/backbones/resnet.py`
-- [x] Region Proposal Network (RPN) head - `detectax/models/heads/rpn.py`
-- [x] RoI Align layer - `detectax/models/layers/roi_align.py`
+- [x] Feature Pyramid Network (FPN) - `detectrax/models/necks/fpn.py`
+- [x] ResNet backbone - `detectrax/models/backbones/resnet.py`
+- [x] Region Proposal Network (RPN) head - `detectrax/models/heads/rpn.py`
+- [x] RoI Align layer - `detectrax/models/layers/roi_align.py`
 - [x] FPN unit tests - `tests/test_fpn.py`
 
 #### In Progress
-- [ ] **Detection Head** (`detectax/models/heads/bbox_head.py`)
+- [ ] **Detection Head** (`detectrax/models/heads/bbox_head.py`)
   - [ ] Box regression and classification
   - [ ] Cascade refinement (optional)
   - [ ] Unit tests
 
-- [ ] **Mask Head** (`detectax/models/heads/mask_head.py`)
+- [ ] **Mask Head** (`detectrax/models/heads/mask_head.py`)
   - [ ] Convolutional mask predictor
   - [ ] Per-class mask outputs
   - [ ] Unit tests
 
-- [ ] **Complete Mask R-CNN Detector** (`detectax/models/detectors/mask_rcnn.py`)
+- [ ] **Complete Mask R-CNN Detector** (`detectrax/models/detectors/mask_rcnn.py`)
   - [ ] Integrate all components (backbone, FPN, RPN, heads)
   - [ ] Forward pass implementation
   - [ ] Loss computation
@@ -48,13 +48,13 @@
 
 ### 📦 Phase 3: Data Pipeline (Not Started)
 
-- [ ] **COCO Dataset Loader** (`detectax/data/coco.py`)
+- [ ] **COCO Dataset Loader** (`detectrax/data/coco.py`)
   - [ ] Load annotations in COCO format
   - [ ] Image loading and preprocessing
   - [ ] Class count verification
   - [ ] Data validation utilities
 
-- [ ] **Data Augmentation** (`detectax/data/augmentation.py`)
+- [ ] **Data Augmentation** (`detectrax/data/augmentation.py`)
   - [ ] Random flip, crop, resize
   - [ ] Color jitter
   - [ ] Mosaic augmentation (optional)
@@ -67,7 +67,7 @@
 
 ### 🎯 Phase 4: Training Infrastructure (Not Started)
 
-- [ ] **Training Loop** (`detectax/training/train.py`)
+- [ ] **Training Loop** (`detectrax/training/train.py`)
   - [ ] Integrate Scenic trainer
   - [ ] Multi-GPU support with pmap/pjit
   - [ ] Gradient accumulation
@@ -79,7 +79,7 @@
   - [ ] Learning rate schedules (step, cosine, warmup)
   - [ ] Gradient clipping
 
-- [ ] **Checkpointing** (`detectax/training/checkpoint.py`)
+- [ ] **Checkpointing** (`detectrax/training/checkpoint.py`)
   - [ ] Save/load with orbax-checkpoint
   - [ ] Best model tracking
   - [ ] Resume from checkpoint
@@ -91,7 +91,7 @@
 
 ### 📊 Phase 5: Evaluation & Testing (Not Started)
 
-- [ ] **COCO Evaluation** (`detectax/evaluation/coco_eval.py`)
+- [ ] **COCO Evaluation** (`detectrax/evaluation/coco_eval.py`)
   - [ ] Integrate pycocotools
   - [ ] Compute mAP, AP50, AP75, etc.
   - [ ] Per-category metrics

@@ -36,7 +36,7 @@ The backbone extracts hierarchical features from the input image.
 - ResNet-101
 - Vision Transformer (ViT) - planned
 
-**Implementation**: `detectax/models/backbones/`
+**Implementation**: `detectrax/models/backbones/`
 
 The backbone produces multi-scale feature maps at different resolutions:
 - C2: 1/4 of input size
@@ -53,7 +53,7 @@ FPN builds a multi-scale feature pyramid by combining low-resolution, semantical
 2. **Lateral connections**: Merges with backbone features via 1×1 convolutions
 3. **Output**: Multi-scale feature maps {P2, P3, P4, P5, P6}
 
-**Implementation**: `detectax/models/necks/fpn.py`
+**Implementation**: `detectrax/models/necks/fpn.py`
 
 ```python
 # FPN output levels
@@ -83,7 +83,7 @@ RPN generates object proposals (potential bounding boxes) from FPN features.
 - Negative: IoU < 0.3 with ground truth
 - Loss: Binary cross-entropy + smooth L1
 
-**Implementation**: `detectax/models/heads/rpn.py`
+**Implementation**: `detectrax/models/heads/rpn.py`
 
 ### 4. RoI Align
 
@@ -94,7 +94,7 @@ RoI Align extracts fixed-size features for each region proposal without quantiza
 - Output: 7×7 feature grid for each proposal
 - Preserves spatial alignment for mask prediction
 
-**Implementation**: `detectax/models/detectors/roi_align.py`
+**Implementation**: `detectrax/models/detectors/roi_align.py`
 
 ### 5. Detection Head
 
@@ -110,7 +110,7 @@ The detection head refines proposals and predicts final classes and bounding box
 - Negative: IoU in [0.1, 0.5]
 - Loss: Cross-entropy + smooth L1
 
-**Implementation**: `detectax/models/heads/bbox_head.py`
+**Implementation**: `detectrax/models/heads/bbox_head.py`
 
 ### 6. Mask Head
 
@@ -127,7 +127,7 @@ The mask head predicts instance segmentation masks for each detected object.
 - Binary cross-entropy loss (pixel-wise)
 - Class-specific masks (no competition between classes)
 
-**Implementation**: `detectax/models/heads/mask_head.py`
+**Implementation**: `detectrax/models/heads/mask_head.py`
 
 ## Data Flow
 

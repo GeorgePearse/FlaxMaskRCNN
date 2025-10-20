@@ -8,8 +8,8 @@ import jax
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from detectax.models.utils.box_coder import decode_boxes
-from detectax.models.utils.nms import nms
+from detectrax.models.utils.box_coder import decode_boxes
+from detectrax.models.utils.nms import nms
 
 _NUM_ANCHORS = "num_anchors"
 _NUM_ANCHORS_WITH_COORDS = "num_anchors 4"

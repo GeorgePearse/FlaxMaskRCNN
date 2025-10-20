@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from detectax.models.task_modules.post_processors import postprocess_masks
+from detectrax.models.task_modules.post_processors import postprocess_masks
 
 jax = pytest.importorskip("jax")
 jnp = pytest.importorskip("jax.numpy")

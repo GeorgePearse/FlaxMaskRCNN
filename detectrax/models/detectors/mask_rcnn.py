@@ -18,20 +18,20 @@ import jax.numpy as jnp
 import numpy as np
 from jaxtyping import Array, Bool, Float, Int
 
-from detectax.models.backbones.resnet import ResNetBackbone
-from detectax.models.heads.rpn import RPN
-from detectax.models.layers.roi_align import roi_align
-from detectax.models.losses.detection_loss import detection_loss
-from detectax.models.losses.mask_loss import mask_loss
-from detectax.models.losses.rpn_loss import rpn_loss
-from detectax.models.necks.fpn import FPN
-from detectax.models.roi_heads.mask_heads.fcn_mask_head import FCNMaskHead
-from detectax.models.task_modules.assigners.detection_assigner import assign_detection_targets
-from detectax.models.task_modules.assigners.rpn_assigner import assign_rpn_targets
-from detectax.models.task_modules.mask_target_generator import generate_mask_targets
-from detectax.models.utils.anchor_generator import AnchorGenerator
-from detectax.models.utils.box_coder import decode_boxes
-from detectax.models.utils.nms import nms
+from detectrax.models.backbones.resnet import ResNetBackbone
+from detectrax.models.heads.rpn import RPN
+from detectrax.models.layers.roi_align import roi_align
+from detectrax.models.losses.detection_loss import detection_loss
+from detectrax.models.losses.mask_loss import mask_loss
+from detectrax.models.losses.rpn_loss import rpn_loss
+from detectrax.models.necks.fpn import FPN
+from detectrax.models.roi_heads.mask_heads.fcn_mask_head import FCNMaskHead
+from detectrax.models.task_modules.assigners.detection_assigner import assign_detection_targets
+from detectrax.models.task_modules.assigners.rpn_assigner import assign_rpn_targets
+from detectrax.models.task_modules.mask_target_generator import generate_mask_targets
+from detectrax.models.utils.anchor_generator import AnchorGenerator
+from detectrax.models.utils.box_coder import decode_boxes
+from detectrax.models.utils.nms import nms
 
 # ---------------------------------------------------------------------------
 # Type aliases for readability.

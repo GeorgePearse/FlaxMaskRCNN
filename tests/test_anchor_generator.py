@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from detectax.models.utils import AnchorGenerator, generate_pyramid_anchors
+from detectrax.models.utils import AnchorGenerator, generate_pyramid_anchors
 
 
 @pytest.fixture

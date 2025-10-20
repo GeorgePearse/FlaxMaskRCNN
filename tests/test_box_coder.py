@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from detectax.models.utils import decode_boxes, encode_boxes
+from detectrax.models.utils import decode_boxes, encode_boxes
 
 jax = pytest.importorskip("jax")
 jnp = pytest.importorskip("jax.numpy")

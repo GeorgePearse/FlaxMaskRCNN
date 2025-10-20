@@ -183,7 +183,7 @@ This project uses the zen-mcp-server's `clink` tool to enable collaboration betw
 mcp__zen__clink(
     prompt="Implement the RoI Align layer in JAX/Flax with proper type annotations",
     cli_name="codex",
-    files=["/home/georgepearse/FlaxMaskRCNN/detectax/models/layers/roi_align.py"]
+    files=["/home/georgepearse/FlaxMaskRCNN/detectrax/models/layers/roi_align.py"]
 )
 ```
 
@@ -195,7 +195,7 @@ mcp__zen__clink(
     prompt="Review this FPN implementation for correctness and JAX best practices",
     cli_name="codex",
     role="codereviewer",
-    files=["/home/georgepearse/FlaxMaskRCNN/detectax/models/necks/fpn.py"]
+    files=["/home/georgepearse/FlaxMaskRCNN/detectrax/models/necks/fpn.py"]
 )
 ```
 
@@ -240,7 +240,7 @@ Clink spawns autonomous CLI agents with relaxed permissions (`--dangerously-bypa
 mcp__zen__clink(
     prompt="""
     Port the RPN head from reference/visdet_models/dense_heads/anchor_head.py
-    to detectax/models/heads/rpn_head.py using JAX/Flax patterns.
+    to detectrax/models/heads/rpn_head.py using JAX/Flax patterns.
 
     Requirements:
     - Use Flax nn.Module
@@ -251,7 +251,7 @@ mcp__zen__clink(
     cli_name="codex",
     files=[
         "reference/visdet_models/dense_heads/anchor_head.py",
-        "detectax/models/necks/fpn.py"  # for pattern reference
+        "detectrax/models/necks/fpn.py"  # for pattern reference
     ]
 )
 
@@ -393,14 +393,14 @@ Bash(command="bash /tasks/sprint_1/run_parallel.sh", run_in_background=True)
 BashOutput(bash_id="...")  # Check task completion
 
 # 4. Review implementations as they complete
-Read("detectax/models/utils/box_coder.py")  # Review generated code
+Read("detectrax/models/utils/box_coder.py")  # Review generated code
 Read("tests/test_box_coder.py")  # Review generated tests
 
 # 5. Validate
 Bash("uv run pytest tests/test_box_coder.py -v")  # Run tests
 
 # 6. Commit if valid
-Bash("git add detectax/models/utils/box_coder.py tests/test_box_coder.py")
+Bash("git add detectrax/models/utils/box_coder.py tests/test_box_coder.py")
 Bash('git commit -m "feat: Implement box encoding/decoding (Task 1.2)"')
 
 # 7. Repeat for all completed tasks

@@ -7,7 +7,7 @@ import jax.numpy as jnp
 import pytest
 from flax.core import freeze, unfreeze
 
-from detectax.models.roi_heads.mask_heads import FCNMaskHead
+from detectrax.models.roi_heads.mask_heads import FCNMaskHead
 
 
 @pytest.fixture

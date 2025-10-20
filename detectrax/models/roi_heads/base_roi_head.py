@@ -11,7 +11,7 @@ import flax.linen as nn
 import jax.numpy as jnp
 from jaxtyping import Array, Float, Int
 
-from detectax.models.layers.roi_align import roi_align
+from detectrax.models.layers.roi_align import roi_align
 
 _ROIS_AXIS = "rois"
 _ROIS_WITH_COORDS = "rois 4"

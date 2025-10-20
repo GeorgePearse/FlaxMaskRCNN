@@ -36,7 +36,7 @@ jobs:
 
     - name: Run tests
       run: |
-        uv run pytest tests/ -v --tb=short --cov=detectax --cov-report=xml --cov-report=term
+        uv run pytest tests/ -v --tb=short --cov=detectrax --cov-report=xml --cov-report=term
 
     - name: Run training smoke test
       run: |
@@ -73,8 +73,8 @@ jobs:
 
     - name: Run pyright
       run: |
-        uv run pyright detectax/ || true
+        uv run pyright detectrax/ || true
 
     - name: Run ruff check
       run: |
-        uv run ruff check detectax/ ml_collections/
+        uv run ruff check detectrax/ ml_collections/
