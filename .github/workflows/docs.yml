@@ -1,0 +1,62 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  check-docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+
+    - name: Install dependencies
+      run: |
+        uv sync --all-extras
+
+    - name: Check all Python files have docstrings
+      run: |
+        uv run python -c "
+        import ast
+        import sys
+        from pathlib import Path
+
+        missing_docstrings = []
+        for py_file in Path('detectax').rglob('*.py'):
+            if py_file.name.startswith('test_'):
+                continue
+            with open(py_file) as f:
+                try:
+                    tree = ast.parse(f.read())
+                    for node in ast.walk(tree):
+                        if isinstance(node, (ast.FunctionDef, ast.ClassDef, ast.Module)):
+                            if not ast.get_docstring(node):
+                                missing_docstrings.append(f'{py_file}:{node.lineno}:{node.name}')
+                except SyntaxError:
+                    pass
+
+        if missing_docstrings:
+            print('Missing docstrings:')
+            for item in missing_docstrings[:10]:  # Show first 10
+                print(f'  {item}')
+            sys.exit(0)  # Don't fail CI, just warn
+        "
+
+    - name: Check README exists and is not empty
+      run: |
+        if [ ! -f README.md ] || [ ! -s README.md ]; then
+          echo "Warning: README.md is missing or empty"
+          exit 0  # Don't fail CI, just warn
+        fi
