@@ -75,7 +75,7 @@ def _nms_single(
 
     def body_fn(state: tuple[Int[Array, ""], Int[Array, ""], Array, Array]) -> tuple[Int[Array, ""], Int[Array, ""], Array, Array]:
         i, kept_count, suppressed_mask, kept = state
-        current_index = sorted_indices[i]
+        current_index = jax.lax.dynamic_index_in_dim(sorted_indices, i, axis=0, keepdims=False)
 
         def skip_fn(
             operand: tuple[Int[Array, ""], Int[Array, ""], Array, Array, Int[Array, ""]],
@@ -87,15 +87,16 @@ def _nms_single(
             operand: tuple[Int[Array, ""], Int[Array, ""], Array, Array, Int[Array, ""]],
         ) -> tuple[Int[Array, ""], Int[Array, ""], Array, Array]:
             idx_i, count, mask, selected, candidate = operand
-            candidate_box = jax.lax.dynamic_slice(boxes, (candidate, 0), (1, boxes.shape[1]))
+            candidate_box = jax.lax.dynamic_slice(boxes, (candidate, 0), (1, 4))
             ious = box_iou(candidate_box, boxes)[0]
             new_mask = jnp.logical_or(mask, ious > iou_threshold)
             new_mask = new_mask.at[candidate].set(True)
             new_selected = selected.at[count].set(candidate)
             return idx_i + 1, count + 1, new_mask, new_selected
 
+        current_suppressed = jax.lax.dynamic_index_in_dim(suppressed_mask, current_index, axis=0, keepdims=False)
         return jax.lax.cond(
-            suppressed_mask[current_index],
+            current_suppressed,
             skip_fn,
             select_fn,
             (i, kept_count, suppressed_mask, kept, current_index),

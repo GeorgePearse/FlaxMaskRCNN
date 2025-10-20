@@ -75,7 +75,7 @@ class FPN(nn.Module):
     def setup(self) -> None:
         """Initialize FPN layers."""
         # Validate inputs
-        assert isinstance(self.in_channels, (list, tuple))
+        assert isinstance(self.in_channels, list | tuple)
         num_ins = len(self.in_channels)
 
         # Determine backbone end level
@@ -88,7 +88,7 @@ class FPN(nn.Module):
             assert self.num_outs == self.end_level - self.start_level + 1
 
         # Validate add_extra_convs
-        assert isinstance(self.add_extra_convs, (str, bool))
+        assert isinstance(self.add_extra_convs, str | bool)
         if isinstance(self.add_extra_convs, str):
             assert self.add_extra_convs in ("on_input", "on_lateral", "on_output")
 
