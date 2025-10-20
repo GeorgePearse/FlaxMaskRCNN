@@ -1,42 +1,32 @@
 #!/usr/bin/env python3
-"""Flax-based training script for Mask R-CNN.
-
-This script uses the production-ready Flax training infrastructure from
-detectrax.training.train, which provides:
-- Proper TrainState management with Flax structs
-- Orbax checkpointing for model persistence
-- Multi-device support via pmap
-- AdamW optimizer with gradient clipping
-- Progress tracking with tqdm
+"""Convenient training script for Mask R-CNN.
 
 Usage:
-    # CMR dataset with defaults
-    python train.py --cmr
-
-    # Custom dataset
     python train.py --annotations /path/to/train.json --images /path/to/images
 
-    # With custom hyperparameters
-    python train.py --cmr --batch-size 4 --lr 1e-4 --num-steps 10000
+    # With custom config
+    python train.py --annotations /path/to/train.json --images /path/to/images \
+        --num-proposals 1000 --batch-size 4 --epochs 10 --lr 1e-4
+
+    # CMR dataset (default paths)
+    python train.py --cmr
 """
 
 import argparse
-from collections.abc import Iterator
 from pathlib import Path
 
+import jax
 import jax.numpy as jnp
-import numpy as np
-from PIL import Image
+import optax
+from tqdm import tqdm
 
 from detectrax.data.coco_utils import get_num_classes_from_coco
 from detectrax.models.detectors.mask_rcnn import MaskRCNN, MaskRCNNConfig, MaskRCNNTargets
-from detectrax.training.train import train
-from ml_collections import ConfigDict
 
 
 def parse_args():
     """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description="Train Mask R-CNN with Flax infrastructure")
+    parser = argparse.ArgumentParser(description="Train Mask R-CNN on COCO dataset")
 
     # Dataset arguments
     parser.add_argument("--cmr", action="store_true", help="Use default CMR dataset paths")
@@ -49,22 +39,17 @@ def parse_args():
     parser.add_argument(
         "--class-agnostic-bbox", action="store_false", dest="class_agnostic_bbox", help="Disable class-agnostic bbox (use per-class instead)"
     )
-    parser.set_defaults(class_agnostic_bbox=True)
+    parser.set_defaults(class_agnostic_bbox=True)  # Default: True (class-agnostic)
 
     # Training arguments
     parser.add_argument("--batch-size", type=int, default=2, help="Batch size (default: 2)")
-    parser.add_argument("--num-steps", type=int, default=1000, help="Number of training steps (default: 1000)")
+    parser.add_argument("--epochs", type=int, default=2, help="Number of epochs (default: 2)")
     parser.add_argument("--lr", type=float, default=1e-5, help="Learning rate (default: 1e-5)")
-    parser.add_argument("--weight-decay", type=float, default=0.0001, help="Weight decay (default: 0.0001)")
     parser.add_argument("--grad-clip", type=float, default=1.0, help="Gradient clipping norm (default: 1.0)")
-    parser.add_argument("--warmup-steps", type=int, default=100, help="Warmup steps (default: 100)")
     parser.add_argument("--max-images", type=int, default=None, help="Max images to load (default: all)")
 
-    # Logging and checkpointing
+    # Output arguments
     parser.add_argument("--output-dir", type=str, default="./checkpoints", help="Output directory for checkpoints")
-    parser.add_argument("--log-every", type=int, default=10, help="Log metrics every N steps (default: 10)")
-    parser.add_argument("--checkpoint-every", type=int, default=500, help="Save checkpoint every N steps (default: 500)")
-    parser.add_argument("--max-checkpoints", type=int, default=3, help="Max checkpoints to keep (default: 3)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
 
     args = parser.parse_args()
@@ -84,6 +69,9 @@ def parse_args():
 def load_coco_batch(annotation_file: str, image_dir: str, batch_size: int = 2, max_images: int | None = None):
     """Load batches from COCO dataset."""
     import json
+
+    import numpy as np
+    from PIL import Image
 
     with open(annotation_file) as f:
         data = json.load(f)
@@ -186,37 +174,59 @@ def load_coco_batch(annotation_file: str, image_dir: str, batch_size: int = 2, m
         masks = jnp.array(np.stack(masks_padded), dtype=jnp.float32)
 
         targets = MaskRCNNTargets(boxes=boxes, labels=labels, masks=masks)
-        batches.append({"images": images, "targets": targets})
+        batches.append((images, targets))
 
     return batches
 
 
-def create_data_iterator(batches: list[dict], infinite: bool = True) -> Iterator[dict]:
-    """Create an iterator over batches, optionally cycling infinitely."""
-    import itertools
+def create_train_state(model, rng, dummy_input, dummy_targets, learning_rate=1e-5, grad_clip=1.0):
+    """Initialize training state."""
+    # Initialize model
+    variables = model.init(rng, dummy_input, training=True, targets=dummy_targets)
+    params = variables["params"]
 
-    if infinite:
-        return itertools.cycle(iter(batches))
-    return iter(batches)
+    # Create optimizer with gradient clipping to prevent NaN
+    optimizer = optax.chain(
+        optax.clip_by_global_norm(grad_clip),  # Clip gradients to prevent explosions
+        optax.adam(learning_rate),
+    )
+    opt_state = optimizer.init(params)
+
+    return params, opt_state, optimizer
 
 
-def create_warmup_cosine_schedule(base_lr: float, warmup_steps: int, total_steps: int):
-    """Create a learning rate schedule with warmup and cosine decay."""
-    import optax
+def train_step(model, params, opt_state, optimizer, images, targets):
+    """Single training step."""
 
-    warmup_fn = optax.linear_schedule(init_value=0.0, end_value=base_lr, transition_steps=warmup_steps)
+    def loss_fn(params):
+        losses = model.apply(
+            {"params": params},
+            images,
+            training=True,
+            targets=targets,
+        )
+        return losses["loss"], losses
 
-    cosine_fn = optax.cosine_decay_schedule(init_value=base_lr, decay_steps=total_steps - warmup_steps, alpha=0.0)
+    (loss, losses_dict), grads = jax.value_and_grad(loss_fn, has_aux=True)(params)
 
-    return optax.join_schedules(schedules=[warmup_fn, cosine_fn], boundaries=[warmup_steps])
+    # Check for NaN gradients
+    grad_norm = optax.global_norm(grads)
+    if jnp.isnan(grad_norm) or jnp.isinf(grad_norm):
+        print(f"  WARNING: Gradient norm is {grad_norm}, skipping update")
+        return params, opt_state, loss, losses_dict
+
+    updates, opt_state = optimizer.update(grads, opt_state, params)
+    params = optax.apply_updates(params, updates)
+
+    return params, opt_state, loss, losses_dict
 
 
 def main():
-    """Run Flax-based training."""
+    """Run training."""
     args = parse_args()
 
     print("=" * 70)
-    print("Mask R-CNN Training (Flax Infrastructure)")
+    print("Mask R-CNN Training")
     print("=" * 70)
 
     # Configuration
@@ -228,13 +238,13 @@ def main():
     num_classes = get_num_classes_from_coco(args.annotations)
     print(f"Number of classes: {num_classes}")
 
-    # Create model config
+    # Create config
     print("\nCreating model configuration...")
-    model_config = MaskRCNNConfig(
+    config = MaskRCNNConfig(
         num_classes=num_classes,
         num_proposals=args.num_proposals,
         score_threshold=args.score_threshold,
-        class_agnostic_bbox=args.class_agnostic_bbox,
+        class_agnostic_bbox=args.class_agnostic_bbox,  # Default: True (class-agnostic bbox)
         roi_pool_size=7,
         mask_pool_size=14,
         backbone={},
@@ -245,9 +255,11 @@ def main():
         anchor_generator={},
     )
 
+    print(f"Config: num_proposals={args.num_proposals}, lr={args.lr}, batch_size={args.batch_size}")
+
     # Initialize model
     print("Initializing model...")
-    model = MaskRCNN(model_config)
+    model = MaskRCNN(config)
 
     # Load data
     print("\nLoading training data...")
@@ -258,99 +270,46 @@ def main():
         print("❌ No data loaded! Check image paths.")
         return False
 
-    # Create training config
-    print("\nCreating training configuration...")
+    # Initialize training state
+    print("\nInitializing training state...")
+    rng = jax.random.PRNGKey(args.seed)
+    images_init, targets_init = batches[0]
+    params, opt_state, optimizer = create_train_state(model, rng, images_init, targets_init, learning_rate=args.lr, grad_clip=args.grad_clip)
 
-    # Learning rate schedule
-    lr_schedule = create_warmup_cosine_schedule(base_lr=args.lr, warmup_steps=args.warmup_steps, total_steps=args.num_steps)
-
-    config = ConfigDict(
-        {
-            "seed": args.seed,
-            "model": {
-                "module": model,
-                "init_args": [batches[0]["images"]],
-                "init_kwargs": {"training": True, "targets": batches[0]["targets"]},
-                "train_kwargs": {"training": True},
-            },
-            "optimizer": {
-                "learning_rate": lr_schedule,
-                "weight_decay": args.weight_decay,
-                "clip_norm": args.grad_clip,
-                "beta1": 0.9,
-                "beta2": 0.999,
-            },
-            "data": {
-                "train_iter_fn": lambda: create_data_iterator(batches, infinite=True),
-            },
-            "training": {
-                "num_steps": args.num_steps,
-                "log_every_steps": args.log_every,
-                "checkpoint_every_steps": args.checkpoint_every,
-                "use_tqdm": True,
-            },
-            "checkpoint": {
-                "dir": args.output_dir,
-                "max_to_keep": args.max_checkpoints,
-                "restore": True,
-            },
-        }
-    )
-
-    # Custom loss function that handles MaskRCNN's dict-based batch format
-    def mask_rcnn_loss_fn(params, batch, model_state, rng, apply_fn):
-        """Loss function for Mask R-CNN that unpacks batch dict."""
-        images = batch["images"]
-        targets = batch["targets"]
-
-        variables = {"params": params}
-        if model_state:
-            variables.update(model_state)
-
-        # Call model with training=True
-        output = apply_fn(variables, images, training=True, targets=targets)
-
-        # Extract loss and metrics
-        loss = output["loss"]
-        metrics = {k: v for k, v in output.items() if k != "loss"}
-
-        return loss, metrics, model_state
-
-    config.loss_fn = mask_rcnn_loss_fn
-
-    print("\nTraining configuration:")
-    print(f"  Steps: {args.num_steps}")
-    print(f"  Batch size: {args.batch_size}")
-    print(f"  Learning rate: {args.lr} (with warmup and cosine decay)")
-    print(f"  Weight decay: {args.weight_decay}")
-    print(f"  Gradient clipping: {args.grad_clip}")
-    print(f"  Warmup steps: {args.warmup_steps}")
-    print(f"  Checkpoint dir: {args.output_dir}")
-
-    # Run training
+    # Training loop
     print("\nStarting training loop...")
     print("-" * 70)
 
-    result = train(config)
+    for epoch in range(args.epochs):
+        print(f"\nEpoch {epoch + 1}/{args.epochs}")
+        epoch_losses = []
+
+        for batch_idx, (images, targets) in enumerate(tqdm(batches, desc=f"Epoch {epoch + 1}")):
+            params, opt_state, loss, losses_dict = train_step(model, params, opt_state, optimizer, images, targets)
+
+            epoch_losses.append(float(loss))
+
+            if batch_idx == 0 or (batch_idx + 1) % max(1, len(batches) // 2) == 0:
+                print(
+                    f"  Batch {batch_idx + 1}/{len(batches)}: "
+                    f"Loss={loss:.4f} | "
+                    f"RPN_cls={losses_dict['rpn_cls']:.4f} | "
+                    f"Det_cls={losses_dict['det_cls']:.4f} | "
+                    f"Mask={losses_dict['mask']:.4f}"
+                )
+
+        avg_loss = sum(epoch_losses) / len(epoch_losses)
+        print(f"  Epoch {epoch + 1} Average Loss: {avg_loss:.4f}")
 
     print("\n" + "=" * 70)
     print("✅ Training completed successfully!")
     print("=" * 70)
 
-    # Print final metrics
-    if result.history:
-        final_metrics = result.history[-1]
-        print("\nFinal metrics:")
-        for key, value in final_metrics.items():
-            print(f"  {key}: {value:.4f}")
-
     # Test inference
     print("\nTesting inference mode...")
-    test_batch = batches[0]
-    test_images = test_batch["images"]
-
+    test_images, _ = batches[0]
     predictions = model.apply(
-        {"params": result.state.params},
+        {"params": params},
         test_images,
         training=False,
     )
