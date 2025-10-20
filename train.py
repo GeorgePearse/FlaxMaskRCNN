@@ -36,7 +36,10 @@ def parse_args():
     # Model arguments
     parser.add_argument("--num-proposals", type=int, default=1000, help="Number of proposals (default: 1000)")
     parser.add_argument("--score-threshold", type=float, default=0.05, help="Score threshold (default: 0.05)")
-    parser.add_argument("--class-agnostic-bbox", action="store_true", help="Use class-agnostic bbox regression (default: False, per-class)")
+    parser.add_argument(
+        "--class-agnostic-bbox", action="store_false", dest="class_agnostic_bbox", help="Disable class-agnostic bbox (use per-class instead)"
+    )
+    parser.set_defaults(class_agnostic_bbox=True)  # Default: True (class-agnostic)
 
     # Training arguments
     parser.add_argument("--batch-size", type=int, default=2, help="Batch size (default: 2)")
@@ -241,7 +244,7 @@ def main():
         num_classes=num_classes,
         num_proposals=args.num_proposals,
         score_threshold=args.score_threshold,
-        class_agnostic_bbox=args.class_agnostic_bbox,  # Default: False (per-class bbox)
+        class_agnostic_bbox=args.class_agnostic_bbox,  # Default: True (class-agnostic bbox)
         roi_pool_size=7,
         mask_pool_size=14,
         backbone={},
