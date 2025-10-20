@@ -3,7 +3,7 @@
 **Status**: Production-ready, training validated
 **Date**: October 20, 2025
 **Tests**: 124/125 passing
-**Training**: ✅ Successfully running with gradient computation
+**Training**: ✅ Successfully validated with stable gradients (NaN issue resolved)
 
 ---
 
@@ -104,6 +104,19 @@ num_classes = get_num_classes_from_coco("/path/to/annotations.json")
 **Problem**: 15 ruff type annotation errors
 **Solution**: Fixed jaxtyping string annotations, PEP 604 unions
 **Result**: Pre-commit hooks passing (2 minor warnings remaining - non-blocking)
+
+### 5. NaN Gradients in mask_loss (CRITICAL FIX)
+**Problem**: `NaN` gradient norm despite finite loss values - training updates skipped
+**Root Cause**: `jax.lax.cond` computes gradients through BOTH branches, causing division by zero in `total_pixels=num_positive*(H*W)` when `num_positive=0`
+**Diagnosis**: Gemini 2.5 Pro analysis via zen-mcp-server identified gradient-unsafe conditional branching
+**Solution**:
+- Replaced `jax.lax.cond` with `jnp.where` for gradient-safe branching
+- Added `jnp.maximum(total_pixels, 1.0)` to prevent division by zero
+- Zero out loss when `num_positive==0` via `jnp.where`
+**Result**:
+- Smoke test passes without NaN warnings
+- Training completes with stable gradient computation
+- Parameters update correctly across epochs
 
 ---
 
